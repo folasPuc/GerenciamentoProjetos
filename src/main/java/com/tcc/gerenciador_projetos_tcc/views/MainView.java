@@ -3,9 +3,11 @@ package com.tcc.gerenciador_projetos_tcc.views;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.Route;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("")
 public class MainView extends VerticalLayout {
@@ -15,6 +17,8 @@ public class MainView extends VerticalLayout {
     private PasswordField password;
     private Button loginButton;
     private Button registerButton;
+    private Select<String> collegeSelect;
+
 
     public MainView() {
         setLayout();
@@ -23,7 +27,7 @@ public class MainView extends VerticalLayout {
         loginButtonConfig();
         registerButtonConfig();
 
-        add(title, username, password, loginButton, registerButton);
+        add(title, username, password, collegeSelect, loginButton, registerButton);
     }
 
     private void setLayout() {
@@ -47,12 +51,23 @@ public class MainView extends VerticalLayout {
 
         password = new PasswordField("Senha");
         password.getStyle().set("width", "300px");
+
+        configSelect();
+    }
+
+    private void configSelect() {
+        collegeSelect = new Select<>();
+        collegeSelect.setLabel("Faculdade");
+        collegeSelect.setItems("PUCCAMPINAS", "UNICAMP");
+        collegeSelect.setPlaceholder("Selecione a faculdade");
+        collegeSelect.getStyle().set("width", "300px");
     }
 
     private void loginButtonConfig() {
         loginButton = new Button("Entrar", event -> {
             int user = username.getValue();
             String pass = password.getValue();
+            String selected = collegeSelect.getValue();
             // Lógica de login (adicionar backend depois)
         });
 

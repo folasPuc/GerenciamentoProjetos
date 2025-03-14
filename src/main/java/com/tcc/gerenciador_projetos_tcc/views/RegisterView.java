@@ -1,13 +1,17 @@
 package com.tcc.gerenciador_projetos_tcc.views;
 
+import com.tcc.gerenciador_projetos_tcc.service.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("register")
 public class RegisterView extends VerticalLayout {
@@ -20,6 +24,17 @@ public class RegisterView extends VerticalLayout {
     private H1 title;
     private Button registerButton;
     private Button backButton;
+    private Select<String> collegeSelect;
+
+    @Autowired
+    private UsersPucService usersPucService;
+    @Autowired
+    private UsersUnicampService usersUnicampService;
+
+
+    @Autowired
+    private AlunoPucService alunoPucService;
+    @Autowired AlunoUnicampService alunoUnicampService;
 
     public RegisterView() {
 
@@ -29,7 +44,7 @@ public class RegisterView extends VerticalLayout {
         registerButtonConfig();
         backButtonConfig();
 
-        add(title, firstName, lastName, email, ra, password, registerButton, backButton);
+        add(title, firstName, lastName, email, ra, password, collegeSelect, registerButton, backButton);
     }
 
     private void backButtonConfig() {
@@ -50,6 +65,48 @@ public class RegisterView extends VerticalLayout {
         // Botão de Cadastro
         registerButton = new Button("Cadastrar", event -> {
             // Lógica de cadastro (adicionar backend depois)
+            String firstNameValue = firstName.getValue();
+            String lastNameValue = lastName.getValue();
+            String emailValue = email.getValue();
+            Integer raValue = ra.getValue();
+            String passwordValue = password.getValue();
+            String collegeValue = collegeSelect.getValue();
+
+            if (verifyFields(firstNameValue, lastNameValue, emailValue, raValue, passwordValue, collegeValue)) {
+
+
+                switch (collegeValue) {
+                    case "PUCCAMPINAS":
+                        if (alunoPucService.existsRA(raValue)) {
+                            try {
+                                usersPucService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue);
+                                Notification.show("Usuário cadastrado com sucesso!");
+                            } catch (IllegalArgumentException e) {
+                                Notification.show(e.getMessage());
+                            }
+                        } else {
+                            Notification.show("RA inválido para PUCCAMP!");
+                        }
+                        break;
+                    case "UNICAMP":
+                        if (alunoUnicampService.existsRA(raValue)) {
+                            try {
+                                usersUnicampService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue);
+                                Notification.show("Usuário cadastrado com sucesso!");
+                            } catch (IllegalArgumentException e) {
+                                Notification.show(e.getMessage());
+                            }
+                        } else {
+                            Notification.show("RA inválido para UNICAMP!");
+                        }
+                        break;
+                    default:
+                        Notification.show("Faculdade inválida!");
+                        break;
+                }
+
+            }
+
         });
 
         registerButton.getStyle()
@@ -61,21 +118,168 @@ public class RegisterView extends VerticalLayout {
 
     private void formConfig() {
 
-        firstName = new TextField("Nome");
-        firstName.getStyle().set("width", "300px");
+        configFirstName();
+        configLastName();
+        configEmail();
+        configRA();
+        configPassword();
 
-        lastName = new TextField("Sobrenome");
-        lastName.getStyle().set("width", "300px");
+        selectConfig();
 
-        email = new EmailField("Email");
-        email.getStyle().set("width", "300px");
+    }
 
-        ra = new IntegerField("RA");
-        ra.getStyle().set("width", "300px");
-
+    private void configPassword() {
         password = new PasswordField("Senha");
         password.getStyle().set("width", "300px");
 
+        // Tornando o campo obrigatório
+        password.setRequired(true);
+
+        // Definindo a mensagem de erro
+        password.setErrorMessage("A senha não pode estar vazia.");
+
+        // Adicionando listener de foco perdido
+        password.addBlurListener(event -> {
+            if (password.isEmpty()) {
+                password.setInvalid(true);
+            } else {
+                password.setInvalid(false);
+            }
+        });
+
+        // Validando o campo
+        password.addValueChangeListener(event -> {
+            if (password.isEmpty()) {
+                password.setInvalid(true); // Marca o campo como inválido
+            } else {
+                password.setInvalid(false); // Marca o campo como válido
+            }
+        });
+
+    }
+
+    private void configRA() {
+        ra = new IntegerField("RA");
+        ra.getStyle().set("width", "300px");
+
+        // Tornando o campo obrigatório
+        ra.setRequired(true);
+
+        // Definindo a mensagem de erro
+        ra.setErrorMessage("Por favor, insira um número válido para o RA.");
+
+        // Adicionando listener de foco perdido
+        ra.addBlurListener(event -> {
+            if (ra.isEmpty() || ra.getValue() == null) {
+                ra.setInvalid(true);
+            } else {
+                ra.setInvalid(false);
+            }
+        });
+
+        // Validando o campo
+        ra.addValueChangeListener(event -> {
+            if (ra.isEmpty() || ra.getValue() == null) {
+                ra.setInvalid(true); // Marca o campo como inválido
+            } else {
+                ra.setInvalid(false); // Marca o campo como válido
+            }
+        });
+    }
+
+    private void configEmail() {
+        email = new EmailField("Email");
+        email.getStyle().set("width", "300px");
+        // Definindo uma mensagem de erro personalizada
+        email.setErrorMessage("Por favor, insira um e-mail válido.");
+
+        // Tornando o campo obrigatório
+        email.setRequired(true);
+
+        // Adicionando listener de foco perdido
+        email.addBlurListener(event -> {
+            if (email.isEmpty() || !email.getValue().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                email.setInvalid(true);
+            } else {
+                email.setInvalid(false);
+            }
+        });
+
+        // Validando o campo
+        email.addValueChangeListener(event -> {
+            if (email.isEmpty() || !email.getValue().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                email.setInvalid(true); // Marca o campo como inválido
+            } else {
+                email.setInvalid(false); // Marca o campo como válido
+            }
+        });
+
+    }
+
+    private void configLastName() {
+        lastName = new TextField("Sobrenome");
+        lastName.getStyle().set("width", "300px");
+
+        // Tornando o campo obrigatório
+        lastName.setRequired(true);
+
+        // Definindo a mensagem de erro
+        lastName.setErrorMessage("Sobrenome não pode estar vazio.");
+
+        // Adicionando listener de foco perdido para validação imediata
+        lastName.addBlurListener(event -> {
+            if (lastName.isEmpty()) {
+                lastName.setInvalid(true);  // Marca o campo como inválido
+            } else {
+                lastName.setInvalid(false); // Marca o campo como válido
+            }
+        });
+
+        // Validando o campo
+        lastName.addValueChangeListener(event -> {
+            if (lastName.isEmpty()) {
+                lastName.setInvalid(true); // Marca o campo como inválido
+            } else {
+                lastName.setInvalid(false); // Marca o campo como válido
+            }
+        });
+
+    }
+
+    private void configFirstName() {
+        firstName = new TextField("Nome");
+        firstName.getStyle().set("width", "300px");
+        // Definindo uma mensagem de erro personalizada
+        firstName.setErrorMessage("Por favor, insira seu nome.");
+
+        // Tornando o campo obrigatório
+        firstName.setRequired(true);
+
+        // Adicionando listener de foco perdido (blur) para validação imediata
+        firstName.addBlurListener(event -> {
+            if (firstName.isEmpty()) {
+                firstName.setInvalid(true);  // Marca o campo como inválido
+            } else {
+                firstName.setInvalid(false); // Marca o campo como válido
+            }
+        });
+
+        // Validando
+        firstName.addValueChangeListener(event -> {
+            if (firstName.isEmpty()) {
+                firstName.setInvalid(true); // Marca o campo como inválido
+            } else {
+                firstName.setInvalid(false); // Marca o campo como válido
+            }
+        });
+    }
+
+    private void selectConfig() {
+        collegeSelect = new Select<>();
+        collegeSelect.setLabel("Faculdade");
+        collegeSelect.setItems("PUCCAMPINAS", "UNICAMP");
+        collegeSelect.setPlaceholder("Selecione a faculdade");
+        collegeSelect.getStyle().set("width", "300px");
     }
 
     private void titleConfig() {
@@ -92,5 +296,36 @@ public class RegisterView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
         setSizeFull();
+    }
+
+    private boolean verifyFields(String firstName, String lastName, String email, Integer ra, String password, String college) {
+        // Verificando se algum campo está vazio ou inválido
+        if (firstName == null || firstName.trim().isEmpty()) {
+            Notification.show("O campo 'Nome' é obrigatório.");
+            return false;
+        }
+        if (lastName == null || lastName.trim().isEmpty()) {
+            Notification.show("O campo 'Sobrenome' é obrigatório.");
+            return false;
+        }
+        if (email == null || email.trim().isEmpty()) {
+            Notification.show("O campo 'Email' é obrigatório.");
+            return false;
+        }
+        if (ra == null || ra <= 0) {
+            Notification.show("O campo 'RA' é obrigatório e deve ser um valor válido.");
+            return false;
+        }
+        if (password == null || password.trim().isEmpty()) {
+            Notification.show("O campo 'Senha' é obrigatório.");
+            return false;
+        }
+        if (college == null || college.trim().isEmpty()) {
+            Notification.show("O campo 'Faculdade' é obrigatório.");
+            return false;
+        }
+
+        // Se todos os campos estiverem preenchidos corretamente
+        return true;
     }
 }
