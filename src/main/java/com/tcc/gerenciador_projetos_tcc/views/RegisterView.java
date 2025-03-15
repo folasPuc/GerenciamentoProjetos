@@ -25,6 +25,7 @@ public class RegisterView extends VerticalLayout {
     private Button registerButton;
     private Button backButton;
     private Select<String> collegeSelect;
+    private Select<String> cursoSelect;
 
     @Autowired
     private UsersPucService usersPucService;
@@ -44,7 +45,7 @@ public class RegisterView extends VerticalLayout {
         registerButtonConfig();
         backButtonConfig();
 
-        add(title, firstName, lastName, email, ra, password, collegeSelect, registerButton, backButton);
+        add(title, firstName, lastName, email, ra, password, collegeSelect, cursoSelect,registerButton, backButton);
     }
 
     private void backButtonConfig() {
@@ -71,6 +72,7 @@ public class RegisterView extends VerticalLayout {
             Integer raValue = ra.getValue();
             String passwordValue = password.getValue();
             String collegeValue = collegeSelect.getValue();
+            String curso = cursoSelect.getValue();
 
             if (verifyFields(firstNameValue, lastNameValue, emailValue, raValue, passwordValue, collegeValue)) {
 
@@ -79,7 +81,7 @@ public class RegisterView extends VerticalLayout {
                     case "PUCCAMPINAS":
                         if (alunoPucService.existsRA(raValue)) {
                             try {
-                                usersPucService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue);
+                                usersPucService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue, curso);
                                 Notification.show("Usuário cadastrado com sucesso!");
                             } catch (IllegalArgumentException e) {
                                 Notification.show(e.getMessage());
@@ -91,8 +93,10 @@ public class RegisterView extends VerticalLayout {
                     case "UNICAMP":
                         if (alunoUnicampService.existsRA(raValue)) {
                             try {
-                                usersUnicampService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue);
+                                usersUnicampService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue, curso);
                                 Notification.show("Usuário cadastrado com sucesso!");
+
+                                getUI().ifPresent(ui -> ui.navigate(""));
                             } catch (IllegalArgumentException e) {
                                 Notification.show(e.getMessage());
                             }
@@ -123,9 +127,17 @@ public class RegisterView extends VerticalLayout {
         configEmail();
         configRA();
         configPassword();
-
+        cursoSelectConfig();
         selectConfig();
 
+    }
+
+    private void cursoSelectConfig() {
+        cursoSelect = new Select<>();
+        cursoSelect.setLabel("Curso");
+        cursoSelect.setItems("Eng Comp", "Direito");
+        cursoSelect.setPlaceholder("Selecione o curso");
+        cursoSelect.getStyle().set("width", "300px");
     }
 
     private void configPassword() {

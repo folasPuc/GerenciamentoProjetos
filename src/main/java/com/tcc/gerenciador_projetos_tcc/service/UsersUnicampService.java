@@ -1,5 +1,6 @@
 package com.tcc.gerenciador_projetos_tcc.service;
 
+import com.tcc.gerenciador_projetos_tcc.entity.UsersPuc;
 import com.tcc.gerenciador_projetos_tcc.entity.UsersUnicamp;
 import com.tcc.gerenciador_projetos_tcc.repository.UsersUnicampRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class UsersUnicampService {
     }
 
     // Método para salvar um usuário
-    public UsersUnicamp salvarUsuario(Integer ra, String nome, String sobrenome, String email, String senha) {
+    public UsersUnicamp salvarUsuario(Integer ra, String nome, String sobrenome, String email, String senha, String curso) {
         // Verificar se o RA ou o email já existem
         Optional<UsersUnicamp> usuarioExistentePorRa = usersUnicampRepository.findByRa(ra);
         Optional<UsersUnicamp> usuarioExistentePorEmail = usersUnicampRepository.findByEmail(email);
@@ -38,7 +39,7 @@ public class UsersUnicampService {
         String senhaHash = passwordEncoder.encode(senha);
 
         // Criar um novo usuário
-        UsersUnicamp novoUsuario = new UsersUnicamp(ra, nome, sobrenome, email, senhaHash, null);
+        UsersUnicamp novoUsuario = new UsersUnicamp(ra, nome, sobrenome, email, senhaHash, null, curso);
 
         // Salvar o usuário no banco de dados
         return usersUnicampRepository.save(novoUsuario);
@@ -54,5 +55,9 @@ public class UsersUnicampService {
             return passwordEncoder.matches(senha, usuarioExistente.getSenhaHash());
         }
         return false; // RA não encontrado ou senha incorreta
+    }
+
+    public Optional <UsersUnicamp> getUserByRa(Integer ra) {
+        return usersUnicampRepository.findByRa(ra);
     }
 }

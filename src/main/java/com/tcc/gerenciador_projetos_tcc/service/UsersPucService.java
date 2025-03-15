@@ -22,7 +22,7 @@ public class UsersPucService {
     }
 
     // Método para salvar um usuário
-    public UsersPuc salvarUsuario(Integer ra, String nome, String sobrenome, String email, String senha) {
+    public UsersPuc salvarUsuario(Integer ra, String nome, String sobrenome, String email, String senha, String curso) {
         // Verificar se o RA ou o email já existem
         Optional<UsersPuc> usuarioExistentePorRa = usersPucRepository.findByRa(ra);
         Optional<UsersPuc> usuarioExistentePorEmail = usersPucRepository.findByEmail(email);
@@ -42,7 +42,7 @@ public class UsersPucService {
         String senhaHash = passwordEncoder.encode(senha);
 
         // Criar um novo usuário
-        UsersPuc novoUsuario = new UsersPuc(ra, nome, sobrenome, email, senhaHash, null);
+        UsersPuc novoUsuario = new UsersPuc(ra, nome, sobrenome, email, senhaHash, null, curso);
 
         // Salvar o usuário no banco de dados
         return usersPucRepository.save(novoUsuario);
@@ -58,6 +58,10 @@ public class UsersPucService {
             return passwordEncoder.matches(senha, usuarioExistente.getSenhaHash());
         }
         return false; // RA não encontrado ou senha incorreta
+    }
+
+    public Optional <UsersPuc> getUserByRa(Integer ra) {
+        return usersPucRepository.findByRa(ra);
     }
 }
 

@@ -28,18 +28,22 @@ public class UsersUnicamp {
     @Column(nullable = true)
     private String role = "aluno";  // Definindo o valor padrão como "aluno"
 
+    @Column(nullable = true)
+    private String curso = "empty";
+
     // Construtores
     public UsersUnicamp() {
 
     }
 
-    public UsersUnicamp(Integer ra, String nome, String sobrenome, String email, String senhaHash, String role) {
+    public UsersUnicamp(Integer ra, String nome, String sobrenome, String email, String senhaHash, String role, String curso) {
         this.ra = ra;
         this.nome = nome;
         this.sobrenome = sobrenome;
         this.email = email;
         this.senhaHash = senhaHash;
         this.role = (role != null) ? role : "aluno"; // Se o role for fornecido, usa o valor, senão usa "aluno"
+        this.curso = (curso != null) ? curso : "empty"; // Se o role for fornecido, usa o valor, senão usa "aluno"
     }
 
     // Getters e Setters
@@ -97,5 +101,13 @@ public class UsersUnicamp {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getCurso() {
+        return curso;
+    }
+
+    public void setCurso(String curso) {
+        this.curso = curso;
     }
 }
