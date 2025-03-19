@@ -1,8 +1,6 @@
 package com.tcc.gerenciador_projetos_tcc.views;
 
-import com.tcc.gerenciador_projetos_tcc.entity.UsersPuc;
-import com.tcc.gerenciador_projetos_tcc.entity.UsersUnicamp;
-import com.tcc.gerenciador_projetos_tcc.model.User;
+import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -16,7 +14,7 @@ public class HomeView extends VerticalLayout {
     public HomeView() {
         // Recupera o usuário da sessão
 
-        User user = VaadinSession.getCurrent().getAttribute(User.class);
+        Users user = VaadinSession.getCurrent().getAttribute(Users.class);
 
         if (user != null) {
             add(new Text("Olá, " + user.getNome() + " ! "));

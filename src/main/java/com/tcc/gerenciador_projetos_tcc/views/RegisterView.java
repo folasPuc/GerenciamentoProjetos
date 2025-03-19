@@ -27,15 +27,12 @@ public class RegisterView extends VerticalLayout {
     private Select<String> collegeSelect;
     private Select<String> cursoSelect;
 
-    @Autowired
-    private UsersPucService usersPucService;
-    @Autowired
-    private UsersUnicampService usersUnicampService;
-
 
     @Autowired
-    private AlunoPucService alunoPucService;
-    @Autowired AlunoUnicampService alunoUnicampService;
+    private AlunoService alunoService;
+    @Autowired
+    private UserService userService;
+
 
     public RegisterView() {
 
@@ -77,38 +74,17 @@ public class RegisterView extends VerticalLayout {
             if (verifyFields(firstNameValue, lastNameValue, emailValue, raValue, passwordValue, collegeValue)) {
 
 
-                switch (collegeValue) {
-                    case "PUCCAMPINAS":
-                        if (alunoPucService.existsRA(raValue)) {
+                        if (alunoService.existsRAAndFaculdade(raValue, collegeValue)) {
                             try {
-                                usersPucService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue, curso);
+                                userService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue, curso, collegeValue);
                                 Notification.show("Usuário cadastrado com sucesso!");
+                                getUI().ifPresent(ui -> ui.navigate(""));
                             } catch (IllegalArgumentException e) {
                                 Notification.show(e.getMessage());
                             }
                         } else {
                             Notification.show("RA inválido para PUCCAMP!");
                         }
-                        break;
-                    case "UNICAMP":
-                        if (alunoUnicampService.existsRA(raValue)) {
-                            try {
-                                usersUnicampService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue, curso);
-                                Notification.show("Usuário cadastrado com sucesso!");
-
-                                getUI().ifPresent(ui -> ui.navigate(""));
-                            } catch (IllegalArgumentException e) {
-                                Notification.show(e.getMessage());
-                            }
-                        } else {
-                            Notification.show("RA inválido para UNICAMP!");
-                        }
-                        break;
-                    default:
-                        Notification.show("Faculdade inválida!");
-                        break;
-                }
-
             }
 
         });

@@ -3,8 +3,8 @@ package com.tcc.gerenciador_projetos_tcc.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users_puc")
-public class UsersPuc {
+@Table(name = "users")
+public class Users {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,12 +31,15 @@ public class UsersPuc {
     @Column(nullable = true)
     private String curso = "empty";
 
+    @Column(nullable = false)
+    private String faculdade;
+
     // Construtores
-    public UsersPuc() {
+    public Users() {
 
     }
 
-    public UsersPuc(Integer ra, String nome, String sobrenome, String email, String senhaHash, String role, String curso) {
+    public Users(Integer ra, String nome, String sobrenome, String email, String senhaHash, String role, String curso, String faculdade) {
         this.ra = ra;
         this.nome = nome;
         this.sobrenome = sobrenome;
@@ -44,6 +47,7 @@ public class UsersPuc {
         this.senhaHash = senhaHash;
         this.role = (role != null) ? role : "aluno"; // Se o role for fornecido, usa o valor, senão usa "aluno"
         this.curso = (curso != null) ? curso : "empty"; // Se o role for fornecido, usa o valor, senão usa "aluno"
+        this.faculdade = faculdade;
 
     }
 
@@ -110,5 +114,13 @@ public class UsersPuc {
 
     public void setCurso(String curso) {
         this.curso = curso;
+    }
+
+    public String getFaculdade() {
+        return faculdade;
+    }
+
+    public void setFaculdade(String faculdade) {
+        this.faculdade = faculdade;
     }
 }
