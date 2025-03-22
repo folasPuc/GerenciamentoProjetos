@@ -5,13 +5,17 @@ import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.tcc.gerenciador_projetos_tcc.service.AlunoService;
 import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
 import com.tcc.gerenciador_projetos_tcc.service.UserService;
+import com.tcc.gerenciador_projetos_tcc.views.UIManager.UIManager;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -19,7 +23,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @PageTitle("Home")
 @Route("homeview")
@@ -40,6 +46,8 @@ public class HomeView extends VerticalLayout {
         // Recupera o usuário da sessão
 
         user = VaadinSession.getCurrent().getAttribute(Users.class);
+
+        UIManager.getInstance().addUI(UI.getCurrent());
 
         setSizeFull(); // Ocupa toda a tela
         setSpacing(true);
@@ -96,28 +104,41 @@ public class HomeView extends VerticalLayout {
 
     private void addGroupSection() {
         // Botão para criar grupos
-        Button criarGrupoButton = new Button("Criar Grupo", event -> {
-            // Lógica para criação de grupo (futura implementação)
-            abrirCriacaoGrupo();
-        });
+        Button criarGrupoButton = new Button("Criar Grupo", event -> abrirCriacaoGrupo());
 
         // Grid com os grupos do usuário
         grupoGrid = new Grid<>();
         grupoGrid.setItems(grupoService.buscarPorUsuario(user.getId()));
-        grupoGrid.addColumn(Grupo::getNome).setHeader("Grupos").setFlexGrow(1);
-        // Coluna para o botão "+"
-        grupoGrid.addComponentColumn(grupo -> {
-            Button adicionarUsuarioButton = new Button("+", e -> abrirDialogAdicionarUsuario(grupo));
-            return adicionarUsuarioButton;
-        });
 
-        // Coluna para remover usuários
+        // Coluna com o nome do grupo e os botões alinhados
         grupoGrid.addComponentColumn(grupo -> {
+            Span nomeGrupo = new Span(grupo.getNome());
+            nomeGrupo.getStyle()
+                    .set("max-width", "150px") // Limita o tamanho do texto
+                    .set("overflow", "hidden") // Esconde o excesso
+                    .set("white-space", "nowrap") // Mantém o texto em uma linha
+                    .set("text-overflow", "ellipsis"); // Adiciona "..." se o texto for muito longo
+
+            Button adicionarUsuarioButton = new Button("+", e -> abrirDialogAdicionarUsuario(grupo));
             Button removerUsuarioButton = new Button("-", e -> abrirDialogRemoverUsuario(grupo));
-            return removerUsuarioButton;
-        });
+
+            // Criando o layout horizontal e alinhando corretamente
+            HorizontalLayout layout = new HorizontalLayout(nomeGrupo, adicionarUsuarioButton, removerUsuarioButton);
+            layout.setSpacing(true);
+            layout.setPadding(false);
+            layout.setMargin(false);
+            layout.setAlignItems(FlexComponent.Alignment.CENTER);
+
+            // Define a largura correta para manter a estrutura alinhada
+            layout.setFlexGrow(1, nomeGrupo); // Nome ocupa espaço flexível
+            layout.setFlexGrow(0, adicionarUsuarioButton, removerUsuarioButton); // Botões não crescem
+            layout.setFlexShrink(0, adicionarUsuarioButton, removerUsuarioButton); // Botões não encolhem
+
+            return layout;
+        }).setHeader("Grupos").setAutoWidth(true);
 
         grupoGrid.setHeight("600px");
+        grupoGrid.setWidth("400px");
 
         // Adiciona o botão e o grid à sidebar
         sidebar.add(criarGrupoButton, grupoGrid);
@@ -141,6 +162,16 @@ public class HomeView extends VerticalLayout {
                 grupo.removerUsuario(usuario);
                 grupoService.salvar(grupo);
                 usuariosGrid.setItems(grupo.getUsuarios()); // Atualiza o grid
+
+                // Obtém todas as sessões da UI conectadas
+                Collection<UI> uis = VaadinSession.getCurrent().getUIs();  // Não há necessidade de fazer cast para Set
+
+                for (UI ui : uis) {
+                    // Envia a notificação para cada UI conectada
+                    ui.access(() -> Notification.show("mensagemREMOVE"));
+                }
+
+
             });
             return removerButton;
         }).setHeader("Ações");
@@ -197,6 +228,19 @@ public class HomeView extends VerticalLayout {
                 grupoService.salvar(grupo); // Salva o grupo atualizado
                 grupoGrid.setItems(grupoService.buscarPorUsuario(user.getId())); // Atualiza o grid de grupos
                 Notification.show("Adicionado : " + usuarioSelecionado.getNome() + usuarioSelecionado.getSobrenome());
+
+
+                // Obtém todas as sessões da UI conectadas
+                Set<UI> uis = UIManager.getInstance().getAllUIs();
+
+                for (UI ui : uis) {
+
+                    ui.access(() -> {
+                        Notification.show("MensagemADD");
+                    });
+
+                }
+
                 dialog.close(); // Fecha o diálogo
             } else {
                 Notification.show("Por favor, selecione um usuário para adicionar ao grupo.");
@@ -241,5 +285,13 @@ public class HomeView extends VerticalLayout {
         dialog.add(nomeGrupoField, botoes);
 
         dialog.open(); // Abre o modal
+    }
+
+
+    // Quando o Layout for destruído, removemos a UI do UIManager
+    @Override
+    protected void onDetach(DetachEvent event) {
+        // Remove a UI da lista de UIs conectadas
+        UIManager.getInstance().removeUI(UI.getCurrent());
     }
 }
