@@ -109,11 +109,57 @@ public class HomeView extends VerticalLayout {
         grupoGrid.addComponentColumn(grupo -> {
             Button adicionarUsuarioButton = new Button("+", e -> abrirDialogAdicionarUsuario(grupo));
             return adicionarUsuarioButton;
-        }).setHeader("Adicionar Usuários");
+        });
+
+        // Coluna para remover usuários
+        grupoGrid.addComponentColumn(grupo -> {
+            Button removerUsuarioButton = new Button("-", e -> abrirDialogRemoverUsuario(grupo));
+            return removerUsuarioButton;
+        });
+
         grupoGrid.setHeight("600px");
 
         // Adiciona o botão e o grid à sidebar
         sidebar.add(criarGrupoButton, grupoGrid);
+    }
+
+
+    // Método para abrir o diálogo de remoção de usuários
+    private void abrirDialogRemoverUsuario(Grupo grupo) {
+        Dialog dialog = new Dialog();
+
+        // Grid para exibir os usuários do grupo
+        Grid<Users> usuariosGrid = new Grid<>();
+        usuariosGrid.addColumn(Users::getNome).setHeader("Nome");
+        usuariosGrid.addColumn(Users::getSobrenome).setHeader("Sobrenome");
+        usuariosGrid.addColumn(Users::getCurso).setHeader("Curso");
+        usuariosGrid.addColumn(Users::getFaculdade).setHeader("Faculdade");
+
+        // Adiciona uma coluna com botão de remoção
+        usuariosGrid.addComponentColumn(usuario -> {
+            Button removerButton = new Button("Remover", event -> {
+                grupo.removerUsuario(usuario);
+                grupoService.salvar(grupo);
+                usuariosGrid.setItems(grupo.getUsuarios()); // Atualiza o grid
+            });
+            return removerButton;
+        }).setHeader("Ações");
+
+        usuariosGrid.setItems(grupo.getUsuarios()); // Preenche a grid com os usuários do grupo
+        usuariosGrid.setWidth("100%");
+        usuariosGrid.setHeight("300px");
+
+        // Botão para fechar o diálogo
+        Button fecharButton = new Button("Fechar", event -> dialog.close());
+
+        VerticalLayout layout = new VerticalLayout(usuariosGrid, fecharButton);
+        layout.setPadding(true);
+        layout.setSpacing(true);
+
+        dialog.add(layout);
+        dialog.setWidth("800px");
+        dialog.setHeight("800px");
+        dialog.open();
     }
 
     public void abrirDialogAdicionarUsuario(Grupo grupo) {

@@ -66,6 +66,10 @@ public class Grupo {
         this.usuarios.add(user);  // 🔹 Método seguro para adicionar usuários
     }
 
+    public void removerUsuario(Users user) {
+        this.usuarios.remove(user);  // 🔹 Remove o usuário do grupo
+    }
+
 //    public Set<Task> getTasks() {
 //        return tasks;
 //    }
