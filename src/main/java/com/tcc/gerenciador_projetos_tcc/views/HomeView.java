@@ -48,6 +48,8 @@ public class HomeView extends VerticalLayout {
         user = VaadinSession.getCurrent().getAttribute(Users.class);
 
         UIManager.getInstance().addUI(UI.getCurrent());
+        UI.getCurrent().getSession().setAttribute(HomeView.class, this);
+        UI.getCurrent().getSession().setAttribute(Users.class, user);
 
         setSizeFull(); // Ocupa toda a tela
         setSpacing(true);
@@ -121,9 +123,10 @@ public class HomeView extends VerticalLayout {
 
             Button adicionarUsuarioButton = new Button("+", e -> abrirDialogAdicionarUsuario(grupo));
             Button removerUsuarioButton = new Button("-", e -> abrirDialogRemoverUsuario(grupo));
+            Button deletarGrupoButton = new Button("-d", e -> deletarGrupo(grupo));
 
             // Criando o layout horizontal e alinhando corretamente
-            HorizontalLayout layout = new HorizontalLayout(nomeGrupo, adicionarUsuarioButton, removerUsuarioButton);
+            HorizontalLayout layout = new HorizontalLayout(nomeGrupo, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton);
             layout.setSpacing(true);
             layout.setPadding(false);
             layout.setMargin(false);
@@ -131,17 +134,47 @@ public class HomeView extends VerticalLayout {
 
             // Define a largura correta para manter a estrutura alinhada
             layout.setFlexGrow(1, nomeGrupo); // Nome ocupa espaço flexível
-            layout.setFlexGrow(0, adicionarUsuarioButton, removerUsuarioButton); // Botões não crescem
-            layout.setFlexShrink(0, adicionarUsuarioButton, removerUsuarioButton); // Botões não encolhem
+            layout.setFlexGrow(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton); // Botões não crescem
+            layout.setFlexShrink(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton); // Botões não encolhem
 
             return layout;
         }).setHeader("Grupos").setAutoWidth(true);
 
         grupoGrid.setHeight("600px");
-        grupoGrid.setWidth("400px");
+        grupoGrid.setWidth("450px");
 
         // Adiciona o botão e o grid à sidebar
         sidebar.add(criarGrupoButton, grupoGrid);
+    }
+
+    private void deletarGrupo(Grupo grupo) {
+
+        // Excluir o grupo
+        grupoService.deletar(grupo.getId());
+
+        // Obtém todas as sessões da UI conectadas
+        Set<UI> uis = UIManager.getInstance().getAllUIs();
+
+        for (UI ui : uis) {
+
+            ui.access(() -> {
+                Notification.show("Grupo excluido");
+
+                HomeView homeView = ui.getSession().getAttribute(HomeView.class);
+                Users users = ui.getSession().getAttribute(Users.class);
+
+
+                homeView.grupoGrid.setItems(grupoService.buscarPorUsuario(users.getId())); // Atualiza o grid de grupos
+                homeView.grupoGrid.getDataProvider().refreshAll();
+            });
+
+        }
+
+        // Exibe uma notificação confirmando a exclusão
+        Notification.show("Grupo " + grupo.getNome() + " deletado com sucesso.");
+
+
+
     }
 
 
@@ -163,13 +196,24 @@ public class HomeView extends VerticalLayout {
                 grupoService.salvar(grupo);
                 usuariosGrid.setItems(grupo.getUsuarios()); // Atualiza o grid
 
+
                 // Obtém todas as sessões da UI conectadas
-                Collection<UI> uis = VaadinSession.getCurrent().getUIs();  // Não há necessidade de fazer cast para Set
+                Set<UI> uis = UIManager.getInstance().getAllUIs();
 
                 for (UI ui : uis) {
-                    // Envia a notificação para cada UI conectada
-                    ui.access(() -> Notification.show("mensagemREMOVE"));
+
+                    ui.access(() -> {
+                        Notification.show("MensagemRemove");
+                        HomeView homeView = ui.getSession().getAttribute(HomeView.class);
+                        Users users = ui.getSession().getAttribute(Users.class);
+
+
+                        homeView.grupoGrid.setItems(grupoService.buscarPorUsuario(users.getId())); // Atualiza o grid de grupos
+                        homeView.grupoGrid.getDataProvider().refreshAll();
+                    });
+
                 }
+
 
 
             });
@@ -226,7 +270,6 @@ public class HomeView extends VerticalLayout {
             if (usuarioSelecionado != null) {
                 grupo.addUsuario(usuarioSelecionado); // Adiciona o usuário ao grupo
                 grupoService.salvar(grupo); // Salva o grupo atualizado
-                grupoGrid.setItems(grupoService.buscarPorUsuario(user.getId())); // Atualiza o grid de grupos
                 Notification.show("Adicionado : " + usuarioSelecionado.getNome() + usuarioSelecionado.getSobrenome());
 
 
@@ -237,6 +280,13 @@ public class HomeView extends VerticalLayout {
 
                     ui.access(() -> {
                         Notification.show("MensagemADD");
+
+                        HomeView homeView = ui.getSession().getAttribute(HomeView.class);
+                        Users users = ui.getSession().getAttribute(Users.class);
+
+
+                        homeView.grupoGrid.setItems(grupoService.buscarPorUsuario(users.getId())); // Atualiza o grid de grupos
+                        homeView.grupoGrid.getDataProvider().refreshAll();
                     });
 
                 }
