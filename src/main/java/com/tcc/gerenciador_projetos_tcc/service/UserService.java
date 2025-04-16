@@ -7,6 +7,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -54,6 +55,12 @@ public class UserService {
 
     public Optional <Users> getUserByRaAndFaculdade(Integer ra, String faculdade) {
         return usersRepository.findByRaAndFaculdade(ra, faculdade);
+    }
+
+    public List<Users> buscarPorNomeFaculdade(String nome, String faculdade) {
+
+        // Chama o repositório para buscar os usuários com nome e faculdade
+        return usersRepository.findByNomeContainingIgnoreCaseAndFaculdade(nome, faculdade);
     }
 }
 
