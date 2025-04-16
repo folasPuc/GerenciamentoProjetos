@@ -18,6 +18,8 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -29,7 +31,7 @@ import java.util.Set;
 
 @PageTitle("Home")
 @Route("homeview")
-public class HomeView extends VerticalLayout {
+public class HomeView extends HorizontalLayout {
 
     private final UserService userService;
     private final AlunoService alunoService;
@@ -37,6 +39,12 @@ public class HomeView extends VerticalLayout {
     private VerticalLayout sidebar;
     private Users user;
     private Grid<Grupo> grupoGrid;
+    private KanbanView kanbanView;
+    private HorizontalLayout mainContent;
+
+    // Content layouts
+    private VerticalLayout empyContent;
+    private VerticalLayout kanbanContent;
 
 
     public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService) {
@@ -52,26 +60,59 @@ public class HomeView extends VerticalLayout {
         UI.getCurrent().getSession().setAttribute(Users.class, user);
 
         setSizeFull(); // Ocupa toda a tela
-        setSpacing(true);
+        setPadding(false);
+        setSpacing(false);
 
+        if (user != null) {
+            setupLayout();
+        } else {
+            add(new Text("User not authenticated"));
+        }
+
+
+    }
+
+    private void setupLayout() {
+        // Create main layout
+        mainContent = new HorizontalLayout();
+        mainContent.setSizeFull();
+        mainContent.setPadding(false);
+        mainContent.setSpacing(false);
+
+        // Initialize sidebar
         initSidebar();
-        add(sidebar);  // Adiciona o painel lateral à tela
 
+        // Initialize content areas
+        initContentAreas();
+
+        // Add components to the main layout
+        mainContent.add(sidebar, empyContent);
+
+        // Add the main layout to this component
+        add(mainContent);
+    }
+
+    private void initContentAreas() {
+        // Grupos content (default view)
+        empyContent = new VerticalLayout();
+
+        // Initialize Kanban content
+        kanbanContent = new VerticalLayout();
+        kanbanContent.setSizeFull();
+        kanbanContent.setPadding(true);
+
+        // Add grid to grupos content
+        addGroupSection();
     }
 
     private void initSidebar() {
         sidebar = new VerticalLayout();
-        sidebar.setWidth("300px");
+        sidebar.setWidth("470px");
         sidebar.setPadding(true);
         sidebar.setSpacing(true);
 
+        addUserInfo(user); // Exibe as informações do usuário
 
-        if (user != null) {
-            addUserInfo(user); // Exibe as informações do usuário
-            addGroupSection();  // Exibe a seção de grupos
-        } else {
-            sidebar.add(new Text("Usuário não autenticado."));
-        }
     }
 
     private void addUserInfo(Users user) {
@@ -111,6 +152,22 @@ public class HomeView extends VerticalLayout {
         // Grid com os grupos do usuário
         grupoGrid = new Grid<>();
         grupoGrid.setItems(grupoService.buscarPorUsuario(user.getId()));
+
+        grupoGrid.asSingleSelect().addValueChangeListener(event -> {
+            Grupo grupoSelecionado = event.getValue();
+            if (grupoSelecionado != null) {
+                // Aqui você pode fazer o que quiser com o grupo selecionado
+                Notification.show("Grupo selecionado: " + grupoSelecionado.getNome());
+                // Create KanbanView
+                kanbanView = new KanbanView();
+                kanbanContent.removeAll();
+                kanbanContent.add(kanbanView);
+                mainContent.replace(mainContent.getComponentAt(1), kanbanContent);
+            } else {
+                mainContent.replace(mainContent.getComponentAt(1), empyContent);
+            }
+        });
+
 
         // Coluna com o nome do grupo e os botões alinhados
         grupoGrid.addComponentColumn(grupo -> {
