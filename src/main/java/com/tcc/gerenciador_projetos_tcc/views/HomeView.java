@@ -4,6 +4,7 @@ import com.tcc.gerenciador_projetos_tcc.entity.Grupo;
 import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.tcc.gerenciador_projetos_tcc.service.AlunoService;
 import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
+import com.tcc.gerenciador_projetos_tcc.service.TaskService;
 import com.tcc.gerenciador_projetos_tcc.service.UserService;
 import com.tcc.gerenciador_projetos_tcc.views.UIManager.UIManager;
 import com.vaadin.flow.component.DetachEvent;
@@ -36,10 +37,11 @@ public class HomeView extends HorizontalLayout {
     private final UserService userService;
     private final AlunoService alunoService;
     private  final GrupoService grupoService;
+    private final TaskService taskService;
     private VerticalLayout sidebar;
     private Users user;
-    private Grid<Grupo> grupoGrid;
-    private KanbanView kanbanView;
+    Grid<Grupo> grupoGrid;
+    KanbanView kanbanView;
     private HorizontalLayout mainContent;
 
     // Content layouts
@@ -47,10 +49,11 @@ public class HomeView extends HorizontalLayout {
     private VerticalLayout kanbanContent;
 
 
-    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService) {
+    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService) {
         this.userService = userService;
         this.alunoService = alunoService;
         this.grupoService = grupoService;
+        this.taskService = taskService;
         // Recupera o usuário da sessão
 
         user = VaadinSession.getCurrent().getAttribute(Users.class);
@@ -157,14 +160,15 @@ public class HomeView extends HorizontalLayout {
             Grupo grupoSelecionado = event.getValue();
             if (grupoSelecionado != null) {
                 // Aqui você pode fazer o que quiser com o grupo selecionado
-                Notification.show("Grupo selecionado: " + grupoSelecionado.getNome());
+                UI.getCurrent().getSession().setAttribute("kanbanSelected", grupoSelecionado);
                 // Create KanbanView
-                kanbanView = new KanbanView();
+                kanbanView = new KanbanView(grupoSelecionado.getId(), grupoSelecionado.getNome(), taskService);
                 kanbanContent.removeAll();
                 kanbanContent.add(kanbanView);
                 mainContent.replace(mainContent.getComponentAt(1), kanbanContent);
             } else {
                 mainContent.replace(mainContent.getComponentAt(1), empyContent);
+                UI.getCurrent().getSession().setAttribute("kanbanSelected", null);
             }
         });
 
@@ -208,6 +212,7 @@ public class HomeView extends HorizontalLayout {
 
         // Excluir o grupo
         grupoService.deletar(grupo.getId());
+        taskService.deleteAllTasksByGroupId(grupo.getId().intValue());
 
         // Obtém todas as sessões da UI conectadas
         Set<UI> uis = UIManager.getInstance().getAllUIs();
