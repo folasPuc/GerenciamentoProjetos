@@ -25,6 +25,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Background;
 import com.vaadin.flow.theme.lumo.LumoUtility.Border;
@@ -363,7 +364,7 @@ public class KanbanView extends VerticalLayout {
     private void openTaskDialog(Task task, VerticalLayout targetColumn) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(task == null ? "Nova Tarefa" : "Editar Tarefa");
-        dialog.setWidth("600px");
+        dialog.setWidth("800px");
 
         VerticalLayout content = new VerticalLayout();
         content.setPadding(true);
@@ -392,7 +393,7 @@ public class KanbanView extends VerticalLayout {
 
         // Se estiver editando uma tarefa existente, exibe o histórico
         if (task != null) {
-            content.add(createHistoryComponent(task));
+            //content.add(createHistoryComponent(task, "250px"));
 
             // Adicionar comentário
             TextArea commentField = new TextArea("Adicionar comentário");
@@ -407,7 +408,7 @@ public class KanbanView extends VerticalLayout {
                     commentField.clear();
 
                     // Atualiza o componente de histórico
-                    content.replace(content.getComponentAt(3), createHistoryComponent(task));
+                    //content.replace(content.getComponentAt(3), createHistoryComponent(task, "250px"));
 
                     refreshKanbanBoard();
                 }
@@ -479,7 +480,7 @@ public class KanbanView extends VerticalLayout {
         dialog.open();
     }
 
-    private Component createHistoryComponent(Task task) {
+    private Component createHistoryComponent(Task task, String height) {
         H4 historyTitle = new H4("Histórico");
         historyTitle.getStyle().set("margin-bottom", "0.5em");
 
@@ -496,12 +497,31 @@ public class KanbanView extends VerticalLayout {
                 .setHeader("Data/Hora").setAutoWidth(true);
         historyGrid.addColumn(TaskHistoryEntry::getUser)
                 .setHeader("Usuário").setAutoWidth(true);
-        historyGrid.addColumn(TaskHistoryEntry::getAction)
-                .setHeader("Ação").setAutoWidth(true);
-        historyGrid.addColumn(entry -> entry.getDetails() != null ? entry.getDetails() : "")
-                .setHeader("Detalhes").setFlexGrow(1);
 
-        historyGrid.setHeight("200px");
+        // Coluna de ação com ComponentRenderer e span
+        historyGrid.addColumn(new ComponentRenderer<>(entry -> {
+            Span actionSpan = new Span(entry.getAction());
+            actionSpan.getStyle()
+                    .set("white-space", "normal")
+                    .set("word-break", "break-word")
+                    .set("width", "100%")
+                    .set("display", "inline-block");
+            return actionSpan;
+        })).setHeader("Ação").setAutoWidth(true);
+
+        // Coluna de detalhes com ComponentRenderer e span
+        historyGrid.addColumn(new ComponentRenderer<>(entry -> {
+            String details = entry.getDetails() != null ? entry.getDetails() : "";
+            Span detailsSpan = new Span(details);
+            detailsSpan.getStyle()
+                    .set("white-space", "normal")
+                    .set("word-break", "break-word")
+                    .set("width", "100%")
+                    .set("display", "inline-block");
+            return detailsSpan;
+        })).setHeader("Detalhes").setFlexGrow(1);
+
+        historyGrid.setHeight(height);
         historyLayout.add(historyGrid);
 
         return historyLayout;
@@ -510,10 +530,10 @@ public class KanbanView extends VerticalLayout {
     private void showTaskHistory(Task task) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Histórico da Tarefa: " + task.getTitle());
-        dialog.setWidth("800px");
+        dialog.setWidth("1000px");
 
         VerticalLayout content = new VerticalLayout();
-        content.add(createHistoryComponent(task));
+        content.add(createHistoryComponent(task, "400px"));
 
         Button closeButton = new Button("Fechar", e -> dialog.close());
         content.add(closeButton);

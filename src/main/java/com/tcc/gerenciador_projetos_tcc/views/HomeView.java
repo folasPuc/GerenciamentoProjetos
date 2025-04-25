@@ -15,6 +15,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -182,9 +184,9 @@ public class HomeView extends HorizontalLayout {
                     .set("white-space", "nowrap") // Mantém o texto em uma linha
                     .set("text-overflow", "ellipsis"); // Adiciona "..." se o texto for muito longo
 
-            Button adicionarUsuarioButton = new Button("+", e -> abrirDialogAdicionarUsuario(grupo));
-            Button removerUsuarioButton = new Button("-", e -> abrirDialogRemoverUsuario(grupo));
-            Button deletarGrupoButton = new Button("-d", e -> deletarGrupo(grupo));
+            Button adicionarUsuarioButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE), e -> abrirDialogAdicionarUsuario(grupo));
+            Button removerUsuarioButton = new Button(new Icon(VaadinIcon.MINUS_CIRCLE), e -> abrirDialogRemoverUsuario(grupo));
+            Button deletarGrupoButton = new Button(new Icon(VaadinIcon.TRASH), e -> deletarGrupo(grupo));
 
             // Criando o layout horizontal e alinhando corretamente
             HorizontalLayout layout = new HorizontalLayout(nomeGrupo, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton);
