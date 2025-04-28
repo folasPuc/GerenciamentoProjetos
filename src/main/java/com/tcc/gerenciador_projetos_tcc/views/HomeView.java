@@ -164,7 +164,7 @@ public class HomeView extends HorizontalLayout {
                 // Aqui você pode fazer o que quiser com o grupo selecionado
                 UI.getCurrent().getSession().setAttribute("kanbanSelected", grupoSelecionado);
                 // Create KanbanView
-                kanbanView = new KanbanView(grupoSelecionado.getId(), grupoSelecionado.getNome(), taskService);
+                kanbanView = new KanbanView(grupoSelecionado.getId(), grupoSelecionado.getNome(), taskService, grupoService);
                 kanbanContent.removeAll();
                 kanbanContent.add(kanbanView);
                 mainContent.replace(mainContent.getComponentAt(1), kanbanContent);
