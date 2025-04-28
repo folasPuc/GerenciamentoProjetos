@@ -6,6 +6,7 @@ import com.tcc.gerenciador_projetos_tcc.repository.GrupoRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GrupoService {
@@ -30,5 +31,9 @@ public class GrupoService {
 
     public void deletar(Long id) {
         grupoRepository.deleteById(id);
+    }
+
+    public Optional<Grupo> findById(Long id) {
+       return grupoRepository.findById(id);
     }
 }

@@ -4,6 +4,7 @@ import com.tcc.gerenciador_projetos_tcc.entity.Grupo;
 import com.tcc.gerenciador_projetos_tcc.entity.Task;
 import com.tcc.gerenciador_projetos_tcc.entity.TaskHistoryEntry;
 import com.tcc.gerenciador_projetos_tcc.entity.Users;
+import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
 import com.tcc.gerenciador_projetos_tcc.service.TaskService;
 import com.tcc.gerenciador_projetos_tcc.views.UIManager.UIManager;
 import com.vaadin.flow.component.Component;
@@ -23,6 +24,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -36,6 +38,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class KanbanView extends VerticalLayout {
 
@@ -177,8 +180,9 @@ public class KanbanView extends VerticalLayout {
     private Long groupId;
     private String groupName;
     private final TaskService taskService;
+    private final GrupoService grupoService;
 
-    public KanbanView(Long groupId, String groupName, TaskService taskService) {
+    public KanbanView(Long groupId, String groupName, TaskService taskService, GrupoService grupoService) {
         setSizeFull();
         setPadding(true);
         setSpacing(true);
@@ -186,6 +190,7 @@ public class KanbanView extends VerticalLayout {
         this.groupId = groupId;
         this.groupName = groupName;
         this.taskService = taskService;
+        this.grupoService = grupoService;
 
         H3 title = new H3("Kanban Board");
         title.getStyle().set("margin-top", "0");
@@ -383,13 +388,30 @@ public class KanbanView extends VerticalLayout {
             descriptionField.setValue(task.getDescription());
         }
 
-        TextField assigneeField = new TextField("Responsável");
-        assigneeField.setWidthFull();
+//        TextField assigneeField = new TextField("Responsável");
+//        assigneeField.setWidthFull();
+
+        Select<String> assigneeSelect = new Select<>();
+        assigneeSelect.setLabel("Responsável");
+        assigneeSelect.setWidthFull();
+
+        Optional<Grupo> kanbanGroup = grupoService.findById(groupId);
+
+        Set<Users> assignees = kanbanGroup.get().getUsuarios();
+
+        List<String> assigneeNames = assignees.stream()
+                .map(Users::getNome)  // pega apenas o nome
+                .collect(Collectors.toList());
+
+        assigneeSelect.setItems(assigneeNames);
+
+
+
         if (task != null) {
-            assigneeField.setValue(task.getAssignee());
+            assigneeSelect.setValue(task.getAssignee());
         }
 
-        content.add(titleField, descriptionField, assigneeField);
+        content.add(titleField, descriptionField, assigneeSelect);
 
         // Se estiver editando uma tarefa existente, exibe o histórico
         if (task != null) {
@@ -420,7 +442,7 @@ public class KanbanView extends VerticalLayout {
         Button saveButton = new Button("Salvar", e -> {
             String title = titleField.getValue();
             String description = descriptionField.getValue();
-            String assignee = assigneeField.getValue();
+            String assignee = assigneeSelect.getValue();
 
             if (title.isEmpty()) {
                 Notification.show("Por favor, insira um título para a tarefa.");
@@ -580,6 +602,8 @@ public class KanbanView extends VerticalLayout {
 
                         homeView.grupoGrid.deselect(selectedKanban);
                         homeView.grupoGrid.select(selectedKanban);
+
+                        //Notification.show("Estamos atualizando aqui");
 
                     }
 
