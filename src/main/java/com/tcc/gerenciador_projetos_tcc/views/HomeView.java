@@ -188,8 +188,13 @@ public class HomeView extends HorizontalLayout {
             Button removerUsuarioButton = new Button(new Icon(VaadinIcon.MINUS_CIRCLE), e -> abrirDialogRemoverUsuario(grupo));
             Button deletarGrupoButton = new Button(new Icon(VaadinIcon.TRASH), e -> deletarGrupo(grupo));
 
+            Button abrirChatButton = new Button(new Icon(VaadinIcon.COMMENT), e -> {
+                getUI().ifPresent(ui -> ui.navigate("group-chat/" + grupo.getId()));
+            });
+            abrirChatButton.getElement().setProperty("title", "Abrir chat do grupo");
+
             // Criando o layout horizontal e alinhando corretamente
-            HorizontalLayout layout = new HorizontalLayout(nomeGrupo, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton);
+            HorizontalLayout layout = new HorizontalLayout(nomeGrupo, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton, abrirChatButton);
             layout.setSpacing(true);
             layout.setPadding(false);
             layout.setMargin(false);
@@ -197,8 +202,8 @@ public class HomeView extends HorizontalLayout {
 
             // Define a largura correta para manter a estrutura alinhada
             layout.setFlexGrow(1, nomeGrupo); // Nome ocupa espaço flexível
-            layout.setFlexGrow(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton); // Botões não crescem
-            layout.setFlexShrink(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton); // Botões não encolhem
+            layout.setFlexGrow(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton, abrirChatButton); // Botões não crescem
+            layout.setFlexShrink(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton, abrirChatButton); // Botões não encolhem
 
             return layout;
         }).setHeader("Grupos").setAutoWidth(true);
