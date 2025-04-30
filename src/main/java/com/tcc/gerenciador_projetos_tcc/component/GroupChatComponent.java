@@ -1,14 +1,15 @@
 package com.tcc.gerenciador_projetos_tcc.component;
 
-import com.vaadin.flow.component.ComponentEvent;
-import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.Key;
-import com.vaadin.flow.component.Tag;
+import com.tcc.gerenciador_projetos_tcc.entity.Message;
+import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
+import com.tcc.gerenciador_projetos_tcc.service.MessageService;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -27,7 +28,9 @@ public class GroupChatComponent extends VerticalLayout {
     private final String currentUser;
     private final Long groupId;
     private final String groupName;
+    private final MessageService messageService;
     private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+    private final GrupoService grupoService;
 
     /**
      * Construtor para o componente de chat de grupo
@@ -36,10 +39,12 @@ public class GroupChatComponent extends VerticalLayout {
      * @param groupId ID do grupo
      * @param groupName Nome do grupo para exibição
      */
-    public GroupChatComponent(String currentUser, Long groupId, String groupName) {
+    public GroupChatComponent(String currentUser, Long groupId, String groupName, MessageService messageService, GrupoService grupoService) {
         this.currentUser = currentUser;
         this.groupId = groupId;
         this.groupName = groupName;
+        this.messageService = messageService;
+        this.grupoService = grupoService;
 
         setSizeFull();
         setPadding(false);
@@ -93,10 +98,50 @@ public class GroupChatComponent extends VerticalLayout {
 
         add(headerLayout, messagesContainer, inputLayout);
         expand(messagesContainer);
+        
+        loadMessages();
 
         // Adicionar estilos CSS
         applyStyles();
     }
+
+    private void loadMessages() {
+        List<Message> messageList = messageService.getMessagesByGroupId(groupId);
+
+        messagesContainer.removeAll(); // Limpa mensagens anteriores, se houver
+
+        for (Message message : messageList) {
+            // Cria um container individual para cada mensagem
+            Div messageContainer = new Div();
+            messageContainer.addClassName("chat-message");
+
+            if (message.getSender().equals(currentUser)) {
+                messageContainer.addClassName("sent");
+            } else {
+                messageContainer.addClassName("received");
+            }
+
+            VerticalLayout messageContent = new VerticalLayout();
+            messageContent.setPadding(false);
+            messageContent.setSpacing(false);
+
+            Span senderSpan = new Span(message.getSender());
+            senderSpan.addClassName("message-sender");
+
+            Span messageText = new Span(message.getContent());
+
+            Span timeSpan = new Span(message.getTimestamp().format(timeFormatter));
+            timeSpan.addClassName("message-time");
+
+            messageContent.add(senderSpan, messageText, timeSpan);
+            messageContainer.add(messageContent);
+
+            messagesContainer.add(messageContainer);
+        }
+
+        scrollToBottom();
+    }
+
 
     private void applyStyles() {
         getStyle().set("height", "100%");
@@ -186,8 +231,18 @@ public class GroupChatComponent extends VerticalLayout {
     public void sendMessage() {
         String text = messageInput.getValue().trim();
         if (!text.isEmpty()) {
+
+            if (!grupoService.existsById(groupId)) {
+                Notification.show("Este grupo foi excluído.");
+                UI.getCurrent().navigate("/homeview");
+                return;
+            }
+
             // Adicionar a mensagem localmente
             addMessage(new ChatMessage(text, currentUser, LocalDateTime.now(), true));
+
+            messageService.saveMessage(new ChatMessage(text, currentUser, LocalDateTime.now(), true), groupId);
+
             messageInput.clear();
             messageInput.focus();
 
@@ -223,11 +278,10 @@ public class GroupChatComponent extends VerticalLayout {
         messageContent.setPadding(false);
         messageContent.setSpacing(false);
 
-        if (!message.isSent()) {
-            Span senderSpan = new Span(message.getSender());
-            senderSpan.addClassName("message-sender");
-            messageContent.add(senderSpan);
-        }
+        Span senderSpan = new Span(message.getSender());
+        senderSpan.addClassName("message-sender");
+        messageContent.add(senderSpan);
+
 
         Span messageText = new Span(message.getText());
         Span timeSpan = new Span(message.getTimestamp().format(timeFormatter));

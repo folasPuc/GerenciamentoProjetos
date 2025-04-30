@@ -36,4 +36,8 @@ public class GrupoService {
     public Optional<Grupo> findById(Long id) {
        return grupoRepository.findById(id);
     }
+
+    public boolean existsById(Long groupId) {
+        return grupoRepository.existsById(groupId);
+    }
 }

@@ -1,7 +1,12 @@
 package com.tcc.gerenciador_projetos_tcc.views;
 
 import com.tcc.gerenciador_projetos_tcc.component.GroupChatComponent;
+import com.tcc.gerenciador_projetos_tcc.entity.Grupo;
+import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.tcc.gerenciador_projetos_tcc.service.GroupChatService;
+import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
+import com.tcc.gerenciador_projetos_tcc.service.MessageService;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
@@ -10,25 +15,31 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 
 import java.util.List;
+import java.util.Optional;
 
 @Route("group-chat")
 public class GroupChatView extends VerticalLayout implements HasUrlParameter<Long> {
 
     private GroupChatComponent chatComponent;
     private final GroupChatService chatService;
+    private final GrupoService grupoService;
+    private final MessageService messageService;
     private String currentUser;
     private Long groupId;
     private String groupName;
     private Registration messageListenerRegistration;
     private Registration membersRequestRegistration;
 
-    public GroupChatView(GroupChatService chatService) {
+    public GroupChatView(GroupChatService chatService, GrupoService grupoService, MessageService messageService) {
         this.chatService = chatService;
+        this.grupoService = grupoService;
+        this.messageService = messageService;
         setSizeFull();
         setPadding(true);
 
@@ -42,7 +53,8 @@ public class GroupChatView extends VerticalLayout implements HasUrlParameter<Lon
         this.groupId = parameter;
 
         // Em um caso real, você obteria o grupo do banco de dados
-        this.groupName = "Grupo " + groupId; // Substituir por nome real do grupo
+        Optional<Grupo> grupo = grupoService.findById(groupId);
+        this.groupName = grupo.get().getNome(); // Substituir por nome real do grupo
 
         initUI();
     }
@@ -52,7 +64,7 @@ public class GroupChatView extends VerticalLayout implements HasUrlParameter<Lon
 
         H2 title = new H2("Chat do Grupo: " + groupName);
 
-        chatComponent = new GroupChatComponent(currentUser, groupId, groupName);
+        chatComponent = new GroupChatComponent(currentUser, groupId, groupName, messageService, grupoService);
 
         add(title, chatComponent);
         expand(chatComponent);
@@ -129,6 +141,7 @@ public class GroupChatView extends VerticalLayout implements HasUrlParameter<Lon
 
     private String getCurrentUserName() {
         // Em um aplicativo real, você obteria isso da sessão do usuário ou autenticação
-        return "Usuário " + System.currentTimeMillis() % 1000;
+        Users user = VaadinSession.getCurrent().getAttribute(Users.class);
+        return user.getNome() + " " + user.getSobrenome();
     }
 }

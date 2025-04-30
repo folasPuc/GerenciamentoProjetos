@@ -2,10 +2,7 @@ package com.tcc.gerenciador_projetos_tcc.views;
 
 import com.tcc.gerenciador_projetos_tcc.entity.Grupo;
 import com.tcc.gerenciador_projetos_tcc.entity.Users;
-import com.tcc.gerenciador_projetos_tcc.service.AlunoService;
-import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
-import com.tcc.gerenciador_projetos_tcc.service.TaskService;
-import com.tcc.gerenciador_projetos_tcc.service.UserService;
+import com.tcc.gerenciador_projetos_tcc.service.*;
 import com.tcc.gerenciador_projetos_tcc.views.UIManager.UIManager;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Text;
@@ -45,17 +42,19 @@ public class HomeView extends HorizontalLayout {
     Grid<Grupo> grupoGrid;
     KanbanView kanbanView;
     private HorizontalLayout mainContent;
+    private final MessageService messageService;
 
     // Content layouts
     private VerticalLayout empyContent;
     private VerticalLayout kanbanContent;
 
 
-    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService) {
+    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService, MessageService messageService) {
         this.userService = userService;
         this.alunoService = alunoService;
         this.grupoService = grupoService;
         this.taskService = taskService;
+        this.messageService = messageService;
         // Recupera o usuário da sessão
 
         user = VaadinSession.getCurrent().getAttribute(Users.class);
@@ -220,6 +219,7 @@ public class HomeView extends HorizontalLayout {
         // Excluir o grupo
         grupoService.deletar(grupo.getId());
         taskService.deleteAllTasksByGroupId(grupo.getId().intValue());
+        messageService.deleteMessagesByGroupId(grupo.getId());
 
         // Obtém todas as sessões da UI conectadas
         Set<UI> uis = UIManager.getInstance().getAllUIs();
