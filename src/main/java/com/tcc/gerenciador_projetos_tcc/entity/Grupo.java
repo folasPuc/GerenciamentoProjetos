@@ -17,6 +17,9 @@ public class Grupo {
     @Column(nullable = false, unique = true)
     private String nome;
 
+    @Column(nullable = false)
+    private String tipo; // <-- Novo campo adicionado
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "grupo_usuarios",
@@ -70,7 +73,15 @@ public class Grupo {
         this.usuarios.remove(user);  // 🔹 Remove o usuário do grupo
     }
 
-//    public Set<Task> getTasks() {
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    //    public Set<Task> getTasks() {
 //        return tasks;
 //    }
 //

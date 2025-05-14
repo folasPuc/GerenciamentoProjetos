@@ -4,6 +4,7 @@ import com.tcc.gerenciador_projetos_tcc.entity.Grupo;
 import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.tcc.gerenciador_projetos_tcc.service.*;
 import com.tcc.gerenciador_projetos_tcc.views.UIManager.UIManager;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
@@ -18,6 +19,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.TextField;
@@ -43,18 +45,20 @@ public class HomeView extends HorizontalLayout {
     KanbanView kanbanView;
     private HorizontalLayout mainContent;
     private final MessageService messageService;
+    private final GroupChatService groupChatService;
 
     // Content layouts
     private VerticalLayout empyContent;
     private VerticalLayout kanbanContent;
 
 
-    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService, MessageService messageService) {
+    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService, MessageService messageService, GroupChatService groupChatService) {
         this.userService = userService;
         this.alunoService = alunoService;
         this.grupoService = grupoService;
         this.taskService = taskService;
         this.messageService = messageService;
+        this.groupChatService = groupChatService;
         // Recupera o usuário da sessão
 
         user = VaadinSession.getCurrent().getAttribute(Users.class);
@@ -162,12 +166,58 @@ public class HomeView extends HorizontalLayout {
             if (grupoSelecionado != null) {
                 // Aqui você pode fazer o que quiser com o grupo selecionado
                 UI.getCurrent().getSession().setAttribute("kanbanSelected", grupoSelecionado);
-                // Create KanbanView
-                kanbanView = new KanbanView(grupoSelecionado.getId(), grupoSelecionado.getNome(), taskService, grupoService);
-                kanbanContent.removeAll();
-                kanbanContent.add(kanbanView);
-                mainContent.replace(mainContent.getComponentAt(1), kanbanContent);
+
+                // 🧼 Limpeza antes de trocar conteúdo
+                if (!kanbanContent.getChildren().toList().isEmpty()) {
+                    Component existing = kanbanContent.getComponentAt(0);
+                    if (existing instanceof InlineGroupChatView) {
+                        ((InlineGroupChatView) existing).cleanup();
+                    }
+                }
+
+
+
+                if (grupoSelecionado.getTipo().equals("Task")) {
+                    // Create KanbanView
+                    kanbanView = new KanbanView(grupoSelecionado.getId(), grupoSelecionado.getNome(), taskService, grupoService);
+                    kanbanContent.removeAll();
+                    kanbanContent.add(kanbanView);
+                    mainContent.replace(mainContent.getComponentAt(1), kanbanContent);
+
+                } else {
+                    //Significa que o grupo eh do tipo Chat, entao devo construir o componenete de chat e substituir no main content
+                    //Mas o jeito que crio o meu chat eh
+                    // Button abrirChatButton = new Button(new Icon(VaadinIcon.COMMENT), e -> {
+                    //                getUI().ifPresent(ui -> ui.navigate("group-chat/" + grupo.getId()));
+                    //            });
+
+                    InlineGroupChatView inlineChatView = new InlineGroupChatView(
+                            grupoSelecionado.getId(),
+                            grupoSelecionado.getNome(),
+                            getCurrentUserName(),
+                            groupChatService,
+                            messageService,
+                            grupoService
+                    );
+
+                    // Limpar e inserir novo conteúdo
+                    kanbanContent.removeAll();
+                    kanbanContent.add(inlineChatView);
+                    mainContent.replace(mainContent.getComponentAt(1), kanbanContent);
+
+
+                }
+
             } else {
+
+                // 🧼 Limpeza antes de trocar conteúdo
+                if (!kanbanContent.getChildren().toList().isEmpty()) {
+                    Component existing = kanbanContent.getComponentAt(0);
+                    if (existing instanceof InlineGroupChatView) {
+                        ((InlineGroupChatView) existing).cleanup();
+                    }
+                }
+
                 mainContent.replace(mainContent.getComponentAt(1), empyContent);
                 UI.getCurrent().getSession().setAttribute("kanbanSelected", null);
             }
@@ -387,11 +437,18 @@ public class HomeView extends HorizontalLayout {
 
         TextField nomeGrupoField = new TextField("Nome do Grupo");
 
+        Select<String> tipoGrupoSelect = new Select<>();
+        tipoGrupoSelect.setLabel("Tipo do Grupo");
+        tipoGrupoSelect.setItems("Chat", "Task");
+        tipoGrupoSelect.setValue("Task"); // Valor padrão
+
         Button salvarButton = new Button("Criar", event -> {
             String nomeGrupo = nomeGrupoField.getValue();
+            String tipoGrupo = tipoGrupoSelect.getValue();
             if (!nomeGrupo.isEmpty()) {
                 Grupo novoGrupo = new Grupo(nomeGrupo);
                 novoGrupo.addUsuario(user); // Associa o criador ao grupo
+                novoGrupo.setTipo(tipoGrupo);
                 grupoService.salvar(novoGrupo);
                 grupoGrid.setItems(grupoService.buscarPorUsuario(user.getId())); // Atualiza o grid
                 dialog.close();
@@ -401,7 +458,12 @@ public class HomeView extends HorizontalLayout {
         Button cancelarButton = new Button("Cancelar", event -> dialog.close());
 
         HorizontalLayout botoes = new HorizontalLayout(salvarButton, cancelarButton);
-        dialog.add(nomeGrupoField, botoes);
+        //dialog.add(nomeGrupoField, tipoGrupoSelect, botoes);
+
+        VerticalLayout layout = new VerticalLayout(nomeGrupoField, tipoGrupoSelect, botoes);
+        layout.setSpacing(true);
+        layout.setPadding(true);
+        dialog.add(layout);
 
         dialog.open(); // Abre o modal
     }
@@ -412,5 +474,11 @@ public class HomeView extends HorizontalLayout {
     protected void onDetach(DetachEvent event) {
         // Remove a UI da lista de UIs conectadas
         UIManager.getInstance().removeUI(UI.getCurrent());
+    }
+
+    private String getCurrentUserName() {
+        // Em um aplicativo real, você obteria isso da sessão do usuário ou autenticação
+        Users user = VaadinSession.getCurrent().getAttribute(Users.class);
+        return user.getNome() + " " + user.getSobrenome();
     }
 }
