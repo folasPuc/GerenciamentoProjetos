@@ -13,8 +13,12 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.shared.Registration;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -93,7 +97,22 @@ public class GroupChatComponent extends VerticalLayout {
         sendButton.addClickListener(e -> sendMessage());
         sendButton.addClickShortcut(Key.ENTER);
 
-        inputLayout.add(messageInput, sendButton);
+        // Componente de upload (ícone de clipe)
+        MemoryBuffer buffer = new MemoryBuffer();
+        Upload upload = new Upload(buffer);
+        upload.setAcceptedFileTypes("image/*", ".pdf", ".docx", ".txt"); // personalize os tipos permitidos
+        upload.setUploadButton(new Button(VaadinIcon.PAPERCLIP.create()));
+        upload.setMaxFiles(1);
+        upload.setDropAllowed(false);
+        upload.addSucceededListener(event -> {
+            InputStream fileData = buffer.getInputStream();
+            String fileName = event.getFileName();
+            handleFileUpload(fileData, fileName);
+
+            upload.clearFileList();
+        });
+
+        inputLayout.add(upload, messageInput, sendButton);
         inputLayout.expand(messageInput);
 
         add(headerLayout, messagesContainer, inputLayout);
@@ -103,6 +122,23 @@ public class GroupChatComponent extends VerticalLayout {
 
         // Adicionar estilos CSS
         applyStyles();
+    }
+
+    private void handleFileUpload(InputStream fileData, String fileName) {
+
+        // Aqui você pode salvar o arquivo, enviar pelo chat, etc.
+        Notification.show("Arquivo '" + fileName + "' enviado.");
+
+        // Exemplo: converter para array de bytes (se for enviar para o backend)
+        try {
+            byte[] bytes = fileData.readAllBytes();
+            // Enviar para o backend com seu serviço
+            // chatService.sendFileToGroup(groupId, currentUser, fileName, bytes);
+        } catch (IOException e) {
+            Notification.show("Erro ao processar o arquivo.");
+            e.printStackTrace();
+        }
+
     }
 
     private void loadMessages() {
