@@ -1,9 +1,6 @@
 package com.tcc.gerenciador_projetos_tcc.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
@@ -20,13 +17,22 @@ public class Message {
 
     private Long groupId; // apenas o ID do grupo
 
+    // Novos campos para arquivo
+    private String fileName;           // nome do arquivo
+    private String fileType;           // tipo MIME
+    @Lob
+    private byte[] fileData;           // conteúdo do arquivo
+
     public Message() {}
 
-    public Message(String sender, String content, LocalDateTime timestamp, Long groupId) {
+    public Message(String sender, String content, LocalDateTime timestamp, Long groupId, String fileName, String fileType, byte[] fileData) {
         this.sender = sender;
         this.content = content;
         this.timestamp = timestamp;
         this.groupId = groupId;
+        this.fileName = fileName;
+        this.fileType = fileType;
+        this.fileData = fileData;
     }
 
     // Getters e setters
@@ -69,5 +75,29 @@ public class Message {
 
     public void setGroupId(Long groupId) {
         this.groupId = groupId;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getFileType() {
+        return fileType;
+    }
+
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
+    }
+
+    public byte[] getFileData() {
+        return fileData;
+    }
+
+    public void setFileData(byte[] fileData) {
+        this.fileData = fileData;
     }
 }

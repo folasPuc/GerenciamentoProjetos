@@ -26,7 +26,10 @@ public class MessageService {
                 chatMessage.getSender(),
                 chatMessage.getText(),
                 chatMessage.getTimestamp(),
-                groupId
+                groupId,
+                chatMessage.getFileName(),
+                chatMessage.getFileType(),
+                chatMessage.getFileData()
         );
         return repository.save(entity);
     }
