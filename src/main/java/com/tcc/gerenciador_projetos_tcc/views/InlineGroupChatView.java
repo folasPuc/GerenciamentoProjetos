@@ -61,18 +61,29 @@ public class InlineGroupChatView extends VerticalLayout {
         // Entrar no grupo
         chatService.joinGroupChat(groupId, currentUser, message -> {
             getUI().ifPresent(ui -> ui.access(() ->
-                    chatComponent.receiveMessage(message.getText(), message.getSender())
+                    chatComponent.receiveMessage(
+                            message.getText(),
+                            message.getSender(),
+                            message.getFileData(),
+                            message.getFileName(),
+                            message.getFileMimeType()
+                    )
             ));
         });
+
 
         // Listener de envio de mensagens
         messageListenerRegistration = chatComponent.addGroupChatMessageListener(event -> {
             chatService.sendMessageToGroup(
                     event.getMessage().getText(),
                     event.getMessage().getSender(),
-                    event.getGroupId()
+                    event.getGroupId(),
+                    event.getMessage().getFileData(),
+                    event.getMessage().getFileName(),
+                    event.getMessage().getFileType()
             );
         });
+
 
         // Listener de requisição de membros
         membersRequestRegistration = chatComponent.addGroupMembersRequestListener(event -> {

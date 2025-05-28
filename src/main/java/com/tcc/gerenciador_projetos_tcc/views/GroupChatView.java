@@ -78,7 +78,7 @@ public class GroupChatView extends VerticalLayout implements HasUrlParameter<Lon
         chatService.joinGroupChat(groupId, currentUser, message -> {
             getUI().ifPresent(ui -> {
                 ui.access(() -> {
-                    chatComponent.receiveMessage(message.getText(), message.getSender());
+                    chatComponent.receiveMessage(message.getText(), message.getSender(), message.getFileData(), message.getFileName(), message.getFileMimeType());
                 });
             });
         });
@@ -86,7 +86,14 @@ public class GroupChatView extends VerticalLayout implements HasUrlParameter<Lon
         // Registrar listener de mensagens no componente de chat
         messageListenerRegistration = chatComponent.addGroupChatMessageListener(event -> {
             GroupChatComponent.ChatMessage message = event.getMessage();
-            chatService.sendMessageToGroup(message.getText(), message.getSender(), event.getGroupId());
+            chatService.sendMessageToGroup(
+                    message.getText(),
+                    message.getSender(),
+                    event.getGroupId(),
+                    message.getFileData(),      // Supondo que sua ChatMessage tenha esses getters
+                    message.getFileName(),
+                    message.getFileType()
+            );
         });
 
         // Registrar listener para solicitações de membros

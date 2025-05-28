@@ -25,11 +25,21 @@ public class GroupChatService {
         private final Long groupId;
         private final LocalDateTime timestamp;
 
-        public ChatMessage(String text, String sender, Long groupId, LocalDateTime timestamp) {
+        // Novos campos para arquivo (podem ser nulos)
+        private final byte[] fileData;
+        private final String fileName;
+        private final String fileMimeType;
+
+        public ChatMessage(String text, String sender, Long groupId, LocalDateTime timestamp,
+                           byte[] fileData, String fileName, String fileMimeType) {
             this.text = text;
             this.sender = sender;
             this.groupId = groupId;
             this.timestamp = timestamp;
+
+            this.fileData = fileData;
+            this.fileName = fileName;
+            this.fileMimeType = fileMimeType;
         }
 
         public String getText() {
@@ -47,6 +57,11 @@ public class GroupChatService {
         public LocalDateTime getTimestamp() {
             return timestamp;
         }
+
+        // getters para os novos campos
+        public byte[] getFileData() { return fileData; }
+        public String getFileName() { return fileName; }
+        public String getFileMimeType() { return fileMimeType; }
     }
 
     /**
@@ -85,12 +100,14 @@ public class GroupChatService {
      * @param sender Nome do remetente
      * @param groupId ID do grupo
      */
-    public void sendMessageToGroup(String text, String sender, Long groupId) {
+    public void sendMessageToGroup(String text, String sender, Long groupId,
+                                   byte[] fileData, String fileName, String fileMimeType) {
         if (!groupListeners.containsKey(groupId)) {
             return;
         }
 
-        ChatMessage message = new ChatMessage(text, sender, groupId, LocalDateTime.now());
+        ChatMessage message = new ChatMessage(text, sender, groupId, LocalDateTime.now(),
+                fileData, fileName, fileMimeType);
 
         // Enviar para todos os outros usuários do grupo
         groupListeners.get(groupId).forEach((username, handler) -> {
