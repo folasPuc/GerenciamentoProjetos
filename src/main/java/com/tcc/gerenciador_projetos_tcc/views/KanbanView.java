@@ -5,9 +5,11 @@ import com.tcc.gerenciador_projetos_tcc.entity.Task;
 import com.tcc.gerenciador_projetos_tcc.entity.TaskHistoryEntry;
 import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
+import com.tcc.gerenciador_projetos_tcc.service.TaskFilesService;
 import com.tcc.gerenciador_projetos_tcc.service.TaskService;
 import com.tcc.gerenciador_projetos_tcc.views.UIManager.UIManager;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.details.Details;
@@ -15,10 +17,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.dnd.DragSource;
 import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.H4;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -27,6 +26,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Background;
@@ -35,6 +36,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility.BorderRadius;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -181,8 +185,9 @@ public class KanbanView extends VerticalLayout {
     private String groupName;
     private final TaskService taskService;
     private final GrupoService grupoService;
+    private final TaskFilesService taskFilesService;
 
-    public KanbanView(Long groupId, String groupName, TaskService taskService, GrupoService grupoService) {
+    public KanbanView(Long groupId, String groupName, TaskService taskService, GrupoService grupoService, TaskFilesService taskFilesService) {
         setSizeFull();
         setPadding(true);
         setSpacing(true);
@@ -191,6 +196,7 @@ public class KanbanView extends VerticalLayout {
         this.groupName = groupName;
         this.taskService = taskService;
         this.grupoService = grupoService;
+        this.taskFilesService = taskFilesService;
 
         H3 title = new H3("Kanban Board");
         title.getStyle().set("margin-top", "0");
@@ -371,9 +377,60 @@ public class KanbanView extends VerticalLayout {
         dialog.setHeaderTitle(task == null ? "Nova Tarefa" : "Editar Tarefa");
         dialog.setWidth("800px");
 
+        TextArea commentField = new TextArea("Adicionar comentario");
+
         VerticalLayout content = new VerticalLayout();
         content.setPadding(true);
         content.setSpacing(true);
+
+        // Mapa para armazenar os arquivos temporariamente (nome -> conteúdo)
+        Map<String, byte[]> uploadedFiles = new LinkedHashMap<>();
+        Map<String, ByteArrayOutputStream> fileBuffers = new HashMap<>();
+
+        // Componente de upload
+        MemoryBuffer buffer = new MemoryBuffer();
+        Upload upload = new Upload(buffer);
+        upload.setDropLabel(new Span("Arraste arquivos ou clique"));
+        upload.setAcceptedFileTypes(".pdf", ".docx", ".png", ".jpg", ".csv"); // ajuste conforme necessário
+        upload.setWidthFull();
+        upload.setMaxFiles(5);
+
+
+        VerticalLayout uploadSection = new VerticalLayout();
+        uploadSection.setPadding(false);
+        uploadSection.setSpacing(true);
+
+        H2 uploadTitle = new H2("Adicione arquivos a esta tarefa");
+        uploadTitle.getStyle()
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("font-size", "var(--lumo-font-size-s)")
+                .set("margin-bottom", "0");
+
+
+//        upload.setReceiver((fileName, mimeType) -> {
+//            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+//            fileBuffers.put(fileName, buffer);
+//            return buffer;
+//        });
+
+        upload.addSucceededListener(event -> {
+            String fileName = event.getFileName();
+            InputStream file = buffer.getInputStream();
+
+            try {
+                uploadedFiles.put(fileName, file.readAllBytes());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        upload.addFileRemovedListener(event -> {
+            uploadedFiles.remove(event.getFileName());
+        });
+
+        dialog.addDialogCloseActionListener(event -> {
+            uploadedFiles.clear();
+        });
 
         TextField titleField = new TextField("Título");
         titleField.setWidthFull();
@@ -411,38 +468,46 @@ public class KanbanView extends VerticalLayout {
             assigneeSelect.setValue(task.getAssignee());
         }
 
-        content.add(titleField, descriptionField, assigneeSelect);
+        uploadSection.add(uploadTitle, upload);
+
+        content.add(titleField, descriptionField, assigneeSelect, uploadSection);
 
         // Se estiver editando uma tarefa existente, exibe o histórico
         if (task != null) {
             //content.add(createHistoryComponent(task, "250px"));
 
             // Adicionar comentário
-            TextArea commentField = new TextArea("Adicionar comentário");
             commentField.setWidthFull();
             commentField.setHeight("80px");
 
-            Button addCommentButton = new Button("Adicionar comentário", e -> {
-                String comment = commentField.getValue();
-                if (!comment.isEmpty()) {
-                    task.addComment(comment, getCurrentUserName());
-                    taskService.addCommentToTask(task.getId(), comment, getCurrentUserName());
-                    commentField.clear();
+//            Button addCommentButton = new Button("Adicionar comentário", e -> {
+//                String comment = commentField.getValue();
+//                if (!comment.isEmpty()) {
+//                    task.addComment(comment, getCurrentUserName());
+//                    taskService.addCommentToTask(task.getId(), comment, getCurrentUserName());
+//                    commentField.clear();
+//
+//                    // Atualiza o componente de histórico
+//                    //content.replace(content.getComponentAt(3), createHistoryComponent(task, "250px"));
+//
+//                    refreshKanbanBoard();
+//                }
+//            });
 
-                    // Atualiza o componente de histórico
-                    //content.replace(content.getComponentAt(3), createHistoryComponent(task, "250px"));
-
-                    refreshKanbanBoard();
-                }
-            });
-
-            content.add(commentField, addCommentButton);
+            content.add(commentField);
         }
 
         Button saveButton = new Button("Salvar", e -> {
             String title = titleField.getValue();
             String description = descriptionField.getValue();
             String assignee = assigneeSelect.getValue();
+
+            String comment = commentField.getValue();
+                if (!comment.isEmpty() && task != null) {
+                    task.addComment(comment, getCurrentUserName());
+                    taskService.addCommentToTask(task.getId(), comment, getCurrentUserName());
+
+                }
 
             if (title.isEmpty()) {
                 Notification.show("Por favor, insira um título para a tarefa.");
@@ -464,6 +529,30 @@ public class KanbanView extends VerticalLayout {
 
                 // Create new task
                 Task newTask = taskService.createTask(title, description, assignee, status, groupId, currentUser);
+
+                //Here we add the files to TaskFiles if they exist
+                //TODO here
+
+
+                if (!uploadedFiles.isEmpty()) {
+
+                    for (Map.Entry<String, byte[]> entry : uploadedFiles.entrySet()) {
+                        String filename = entry.getKey();
+                        byte[] filedata = entry.getValue();
+
+                        // Aqui você pode salvar no banco de dados
+                        // Exemplo fictício: fileService.saveToDatabase(task.getId(), nomeArquivo, conteudo);
+                        taskFilesService.saveToDatabase((long) newTask.getId(), filename, filedata);
+
+                        System.out.println("Salvando arquivo: " + filename + " (" + filedata.length + " bytes)");
+                    }
+
+                    // Limpa o mapa após envio
+                    uploadedFiles.clear();
+                    Notification.show("Arquivos enviados com sucesso!", 3000, Notification.Position.TOP_CENTER);
+                }
+
+
                 TaskCard card = new TaskCard(newTask);
 
                 // Add to appropriate list
@@ -482,6 +571,25 @@ public class KanbanView extends VerticalLayout {
                 // Update existing task
                 task.updateDetails(title, description, assignee, currentUser);
                 taskService.updateTaskDetails(task.getId(), title, description, assignee, currentUser);
+
+                if (!uploadedFiles.isEmpty()) {
+
+                    for (Map.Entry<String, byte[]> entry : uploadedFiles.entrySet()) {
+                        String filename = entry.getKey();
+                        byte[] filedata = entry.getValue();
+
+                        // Aqui você pode salvar no banco de dados
+                        // Exemplo fictício: fileService.saveToDatabase(task.getId(), nomeArquivo, conteudo);
+                        taskFilesService.saveToDatabase((long) task.getId(), filename, filedata);
+
+                        System.out.println("Salvando arquivo: " + filename + " (" + filedata.length + " bytes)");
+                    }
+
+                    // Limpa o mapa após envio
+                    uploadedFiles.clear();
+                    Notification.show("Arquivos enviados com sucesso!", 3000, Notification.Position.TOP_CENTER);
+                }
+
 
                 // Refresh UI
                 refreshKanbanBoard();
