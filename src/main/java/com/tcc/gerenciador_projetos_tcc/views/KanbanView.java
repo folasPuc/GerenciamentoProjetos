@@ -1,9 +1,6 @@
 package com.tcc.gerenciador_projetos_tcc.views;
 
-import com.tcc.gerenciador_projetos_tcc.entity.Grupo;
-import com.tcc.gerenciador_projetos_tcc.entity.Task;
-import com.tcc.gerenciador_projetos_tcc.entity.TaskHistoryEntry;
-import com.tcc.gerenciador_projetos_tcc.entity.Users;
+import com.tcc.gerenciador_projetos_tcc.entity.*;
 import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
 import com.tcc.gerenciador_projetos_tcc.service.TaskFilesService;
 import com.tcc.gerenciador_projetos_tcc.service.TaskService;
@@ -21,6 +18,7 @@ import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -29,6 +27,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Background;
 import com.vaadin.flow.theme.lumo.LumoUtility.Border;
@@ -36,6 +35,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility.BorderRadius;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -583,7 +583,12 @@ public class KanbanView extends VerticalLayout {
                         taskFilesService.saveToDatabase((long) task.getId(), filename, filedata);
 
                         System.out.println("Salvando arquivo: " + filename + " (" + filedata.length + " bytes)");
+
+                        task.addFile(filename, getCurrentUserName());
                     }
+
+                    taskService.saveTask(task);
+
 
                     // Limpa o mapa após envio
                     uploadedFiles.clear();
@@ -844,26 +849,33 @@ public class KanbanView extends VerticalLayout {
             metadata.add(updatedAt);
 
             // History badge - mostra quantos registros de histórico existem
-            Span historyBadge = new Span(String.valueOf(task.getHistory().size()));
-            historyBadge.getElement().getThemeList().add("badge small contrast");
-            historyBadge.getStyle()
-                    .set("margin-left", "0.5em");
 
+            // Ícone de histórico
             Icon historyIcon = new Icon(VaadinIcon.CLOCK);
-            historyIcon.setSize("14px");
+            historyIcon.getStyle().set("position", "relative");
+            historyIcon.getStyle().set("font-size", "11px");
 
-            Button historyButton = new Button(historyIcon);
-            historyButton.addThemeVariants();
-            historyButton.getStyle()
-                    .set("padding", "0")
-                    .set("min-width", "auto")
-                    .set("margin-left", "0.5em");
+            // Badge com a quantidade de entradas no histórico
+            Span historyBadge = new Span(String.valueOf(task.getHistory().size()));
+            historyBadge.getStyle()
+                    .set("background", "red")
+                    .set("color", "white")
+                    .set("font-size", "10px")
+                    .set("border-radius", "50%")
+                    .set("padding", "0 6px")
+                    .set("position", "absolute")
+                    .set("top", "-8px")
+                    .set("right", "-8px");
+
+
+            // Container para o botão com ícone e badge
+            Div iconWithBadgeH = new Div(historyIcon, historyBadge);
+            iconWithBadgeH.getStyle().set("position", "relative");
+
+            // Botão de histórico com o layout interno
+            Button historyButton = new Button(iconWithBadgeH);
+
             historyButton.addClickListener(e -> showTaskHistory(task));
-
-            HorizontalLayout historyLayout = new HorizontalLayout(historyIcon, historyBadge);
-            historyLayout.setSpacing(false);
-            historyLayout.setPadding(false);
-            historyLayout.setAlignItems(Alignment.CENTER);
 
             // Edit button
             Button editButton = new Button(new Icon(VaadinIcon.EDIT));
@@ -876,6 +888,88 @@ public class KanbanView extends VerticalLayout {
                     openTaskDialog(task, doneColumn);
                 }
             });
+
+            // Files button
+
+            // Criando o ícone de arquivos
+            Icon fileIcon = new Icon(VaadinIcon.FILE);
+            fileIcon.getStyle().set("position", "relative");
+            fileIcon.getStyle().set("font-size", "11px");
+
+            // Badge com o contador
+            Span badge = new Span(String.valueOf(taskFilesService.getFilesByTaskId( (long) task.getId()).size()));
+            badge.getStyle()
+                    .set("background", "red")
+                    .set("color", "white")
+                    .set("font-size", "10px")
+                    .set("border-radius", "50%")
+                    .set("padding", "0 6px")
+                    .set("position", "absolute")
+                    .set("top", "-8px")
+                    .set("right", "-8px");
+
+            // Container para o botão com ícone e badge
+            Div iconWithBadge = new Div(fileIcon, badge);
+            iconWithBadge.getStyle().set("position", "relative");
+
+
+
+            Button filesButton = new Button(iconWithBadge);
+            filesButton.addClickListener(e -> {
+
+                Dialog filesDialog = new Dialog();
+                filesDialog.setHeaderTitle("Arquivos da Tarefa");
+                filesDialog.setWidth("600px");
+
+                VerticalLayout fileListLayout = new VerticalLayout();
+                fileListLayout.setSpacing(false);
+                fileListLayout.setPadding(false);
+
+                Span subTitle = new Span("Arquivos disponíveis para download:");
+                subTitle.getStyle().set("color", "gray").set("font-size", "14px").set("margin-bottom", "10px");
+
+                fileListLayout.add(subTitle);
+
+                List<TaskFiles> files = taskFilesService.getFilesByTaskId((long) task.getId());
+
+                if (files.isEmpty()) {
+                    fileListLayout.add(new Span("Nenhum arquivo disponível."));
+                } else {
+                    for (TaskFiles file : files) {
+                        StreamResource resource = new StreamResource(
+                                file.getFilename(),
+                                () -> new ByteArrayInputStream(file.getFile())
+                        );
+
+                        Icon fileIconA = VaadinIcon.FILE.create();
+                        fileIconA.setSize("16px");
+
+                        Anchor downloadLink = new Anchor(resource, file.getFilename());
+                        downloadLink.getElement().setAttribute("download", true);
+                        downloadLink.getStyle()
+                                .set("text-decoration", "underline")
+                                .set("color", "#1a73e8")
+                                .set("margin-left", "5px");
+
+                        HorizontalLayout fileItem = new HorizontalLayout(fileIconA, downloadLink);
+                        fileItem.setAlignItems(FlexComponent.Alignment.CENTER);
+                        fileItem.setSpacing(true);
+                        fileItem.setPadding(false);
+                        fileListLayout.add(fileItem);
+                    }
+                }
+
+                filesDialog.add(fileListLayout);
+
+                Button close = new Button("Fechar", event -> filesDialog.close());
+                HorizontalLayout footer = new HorizontalLayout(close);
+                footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+                footer.setWidthFull();
+
+                filesDialog.getFooter().add(footer);
+                filesDialog.open();
+            });
+
 
             // Delete button
             Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
@@ -898,13 +992,9 @@ public class KanbanView extends VerticalLayout {
 
             });
 
-            // History button
-            Button viewHistoryButton = new Button(new Icon(VaadinIcon.CLOCK));
-            viewHistoryButton.addClickListener(e -> showTaskHistory(task));
-
             // Action buttons layout
             HorizontalLayout actions = new HorizontalLayout();
-            actions.add(editButton, deleteButton, viewHistoryButton, historyLayout);
+            actions.add(editButton, deleteButton, filesButton, historyButton);
             actions.setWidthFull();
             actions.setJustifyContentMode(JustifyContentMode.END);
             actions.setSpacing(true);
