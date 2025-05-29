@@ -73,6 +73,7 @@ public class HomeView extends HorizontalLayout {
         setSizeFull(); // Ocupa toda a tela
         setPadding(false);
         setSpacing(false);
+        getStyle().set("overflow-y", "hidden");
 
         if (user != null) {
             setupLayout();

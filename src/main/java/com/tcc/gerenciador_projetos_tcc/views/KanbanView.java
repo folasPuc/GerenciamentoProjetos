@@ -276,6 +276,8 @@ public class KanbanView extends VerticalLayout {
         );
         column.setHeight("100%");
         column.setWidth("33%");
+        column.getStyle().set("overflow-y", "auto"); // Adiciona scroll vertical
+        column.getStyle().set("overflow-x", "hidden"); // ou "visible"
 
         H3 columnTitle = new H3(title);
         columnTitle.getStyle()
@@ -734,65 +736,6 @@ public class KanbanView extends VerticalLayout {
             column.remove(column.getComponentAt(column.getComponentCount() - 1));
         }
     }
-
-//    private void addDummyTasks() {
-//        String creator = "Sistema";
-//
-//        // To Do tasks
-//        Task task1 = new Task("Documentar requisitos",
-//                "Levantar e documentar todos os requisitos do projeto",
-//                "João Silva", TaskStatus.TODO, creator);
-//        Task task2 = new Task("Criar diagrama UML",
-//                "Desenhar o diagrama de classes UML do sistema",
-//                "Maria Santos", TaskStatus.TODO, creator);
-//        Task task3 = new Task("Definir cronograma",
-//                "Criar cronograma detalhado para o TCC",
-//                "Pedro Oliveira", TaskStatus.TODO, creator);
-//
-//        // In Progress tasks
-//        Task task4 = new Task("Implementar backend",
-//                "Desenvolvimento da API REST",
-//                "Carlos Ferreira", TaskStatus.IN_PROGRESS, creator);
-//        Task task5 = new Task("Design da interface",
-//                "Criar wireframes e mockups do sistema",
-//                "Ana Costa", TaskStatus.IN_PROGRESS, creator);
-//
-//        // Done tasks
-//        Task task6 = new Task("Definir tema",
-//                "Escolher e aprovar o tema do TCC",
-//                "Equipe", TaskStatus.DONE, creator);
-//        Task task7 = new Task("Escolher orientador",
-//                "Contatar e confirmar orientador para o projeto",
-//                "Coordenador", TaskStatus.DONE, creator);
-//
-//        // Simula algumas ações no histórico para demonstração
-//        task4.updateStatus(TaskStatus.TODO, "João Silva");
-//        task4.updateStatus(TaskStatus.IN_PROGRESS, "Carlos Ferreira");
-//        task4.addComment("Iniciando o desenvolvimento da API com Spring Boot", "Carlos Ferreira");
-//
-//        task6.updateStatus(TaskStatus.TODO, "Maria Santos");
-//        task6.updateStatus(TaskStatus.IN_PROGRESS, "Pedro Oliveira");
-//        task6.updateStatus(TaskStatus.DONE, "Ana Costa");
-//        task6.addComment("Tema aprovado pelo orientador", "Pedro Oliveira");
-//
-//        // Add tasks to lists
-//        todoTasks.add(task1);
-//        todoTasks.add(task2);
-//        todoTasks.add(task3);
-//        inProgressTasks.add(task4);
-//        inProgressTasks.add(task5);
-//        doneTasks.add(task6);
-//        doneTasks.add(task7);
-//
-//        // Add task cards to columns
-//        todoColumn.add(new TaskCard(task1));
-//        todoColumn.add(new TaskCard(task2));
-//        todoColumn.add(new TaskCard(task3));
-//        inProgressColumn.add(new TaskCard(task4));
-//        inProgressColumn.add(new TaskCard(task5));
-//        doneColumn.add(new TaskCard(task6));
-//        doneColumn.add(new TaskCard(task7));
-//    }
 
     // TaskCard component to represent a task in the Kanban board
     private class TaskCard extends Div implements DragSource<TaskCard> {
