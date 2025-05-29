@@ -9,6 +9,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.dnd.DragSource;
@@ -951,10 +952,27 @@ public class KanbanView extends VerticalLayout {
                                 .set("color", "#1a73e8")
                                 .set("margin-left", "5px");
 
-                        HorizontalLayout fileItem = new HorizontalLayout(fileIconA, downloadLink);
+                        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+                        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ERROR);
+                        deleteButton.getElement().setProperty("title", "Remover arquivo");
+                        deleteButton.getStyle().set("margin-left", "auto");
+
+
+                        HorizontalLayout fileItem = new HorizontalLayout(fileIconA, downloadLink, deleteButton);
                         fileItem.setAlignItems(FlexComponent.Alignment.CENTER);
                         fileItem.setSpacing(true);
                         fileItem.setPadding(false);
+
+
+                        deleteButton.addClickListener(click -> {
+                            taskFilesService.deleteById(file.getId());
+                            fileListLayout.remove(fileItem);
+                            task.removeFile(file.getFilename(), getCurrentUserName());
+                            taskService.saveTask(task);
+                            refreshKanbanBoard();
+                            Notification.show("Arquivo removido", 2000, Notification.Position.TOP_CENTER);
+                        });
+
                         fileListLayout.add(fileItem);
                     }
                 }
@@ -987,6 +1005,7 @@ public class KanbanView extends VerticalLayout {
                 Notification.show("Tarefa removida", 2000, Notification.Position.BOTTOM_CENTER);
 
                 taskService.deleteTask(task.getId());
+                taskFilesService.deleteFilesByTaskId((long) task.getId());
                 refreshKanbanBoard();
 
 

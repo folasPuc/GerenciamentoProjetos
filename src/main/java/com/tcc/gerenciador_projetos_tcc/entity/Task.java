@@ -107,6 +107,11 @@ public class Task {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void removeFile(String fileName, String user) {
+        this.history.add(new TaskHistoryEntry("Removeu um arquivo", user, fileName, this));
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public int getId() {
         return id;
     }

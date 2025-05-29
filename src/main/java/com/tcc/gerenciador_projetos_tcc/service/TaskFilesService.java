@@ -2,6 +2,7 @@ package com.tcc.gerenciador_projetos_tcc.service;
 
 import java.util.List;
 
+import com.tcc.gerenciador_projetos_tcc.entity.Task;
 import com.tcc.gerenciador_projetos_tcc.entity.TaskFiles;
 import com.tcc.gerenciador_projetos_tcc.repository.TaskFilesRepository;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,20 @@ public class TaskFilesService {
 
     public List<TaskFiles> getFilesByTaskId(Long taskId) {
         return taskFileRepository.findByTaskId(taskId);
+    }
+
+    public void deleteAllTaskFiles(List<Task> taskList) {
+        for (Task t : taskList) {
+            taskFileRepository.deleteByTaskId((long) t.getId());
+        }
+    }
+
+    public void deleteFilesByTaskId(Long taskId) {
+        taskFileRepository.deleteByTaskId(taskId);
+    }
+
+    public void deleteById(Long fileId) {
+        taskFileRepository.deleteById(fileId);
     }
 
 }

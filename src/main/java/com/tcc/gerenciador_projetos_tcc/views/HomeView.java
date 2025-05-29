@@ -1,6 +1,7 @@
 package com.tcc.gerenciador_projetos_tcc.views;
 
 import com.tcc.gerenciador_projetos_tcc.entity.Grupo;
+import com.tcc.gerenciador_projetos_tcc.entity.Task;
 import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.tcc.gerenciador_projetos_tcc.service.*;
 import com.tcc.gerenciador_projetos_tcc.views.UIManager.UIManager;
@@ -270,6 +271,8 @@ public class HomeView extends HorizontalLayout {
 
         // Excluir o grupo
         grupoService.deletar(grupo.getId());
+        List<Task> deleteTaskFileList = taskService.getTasksByGroup(grupo.getId().intValue());
+        taskFilesService.deleteAllTaskFiles(deleteTaskFileList);
         taskService.deleteAllTasksByGroupId(grupo.getId().intValue());
         messageService.deleteMessagesByGroupId(grupo.getId());
 
