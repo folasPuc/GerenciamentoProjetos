@@ -328,7 +328,6 @@ public class HomeView extends HorizontalLayout {
                 for (UI ui : uis) {
 
                     ui.access(() -> {
-                        Notification.show("MensagemRemove");
                         HomeView homeView = ui.getSession().getAttribute(HomeView.class);
                         Users users = ui.getSession().getAttribute(Users.class);
 
@@ -404,7 +403,6 @@ public class HomeView extends HorizontalLayout {
                 for (UI ui : uis) {
 
                     ui.access(() -> {
-                        Notification.show("MensagemADD");
 
                         HomeView homeView = ui.getSession().getAttribute(HomeView.class);
                         Users users = ui.getSession().getAttribute(Users.class);

@@ -507,7 +507,7 @@ public class KanbanView extends VerticalLayout {
 
             String comment = commentField.getValue();
                 if (!comment.isEmpty() && task != null) {
-                    task.addComment(comment, getCurrentUserName());
+                    //task.addComment(comment, getCurrentUserName());
                     taskService.addCommentToTask(task.getId(), comment, getCurrentUserName());
 
                 }
