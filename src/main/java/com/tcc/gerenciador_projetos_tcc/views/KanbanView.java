@@ -1,33 +1,34 @@
 package com.tcc.gerenciador_projetos_tcc.views;
 
-import com.tcc.gerenciador_projetos_tcc.entity.Grupo;
-import com.tcc.gerenciador_projetos_tcc.entity.Task;
-import com.tcc.gerenciador_projetos_tcc.entity.TaskHistoryEntry;
-import com.tcc.gerenciador_projetos_tcc.entity.Users;
+import com.tcc.gerenciador_projetos_tcc.entity.*;
 import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
+import com.tcc.gerenciador_projetos_tcc.service.TaskFilesService;
 import com.tcc.gerenciador_projetos_tcc.service.TaskService;
 import com.tcc.gerenciador_projetos_tcc.views.UIManager.UIManager;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.dnd.DragSource;
 import com.vaadin.flow.component.dnd.DropTarget;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.H4;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility.Background;
 import com.vaadin.flow.theme.lumo.LumoUtility.Border;
@@ -35,6 +36,10 @@ import com.vaadin.flow.theme.lumo.LumoUtility.BorderRadius;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -181,8 +186,9 @@ public class KanbanView extends VerticalLayout {
     private String groupName;
     private final TaskService taskService;
     private final GrupoService grupoService;
+    private final TaskFilesService taskFilesService;
 
-    public KanbanView(Long groupId, String groupName, TaskService taskService, GrupoService grupoService) {
+    public KanbanView(Long groupId, String groupName, TaskService taskService, GrupoService grupoService, TaskFilesService taskFilesService) {
         setSizeFull();
         setPadding(true);
         setSpacing(true);
@@ -191,6 +197,7 @@ public class KanbanView extends VerticalLayout {
         this.groupName = groupName;
         this.taskService = taskService;
         this.grupoService = grupoService;
+        this.taskFilesService = taskFilesService;
 
         H3 title = new H3("Kanban Board");
         title.getStyle().set("margin-top", "0");
@@ -269,6 +276,8 @@ public class KanbanView extends VerticalLayout {
         );
         column.setHeight("100%");
         column.setWidth("33%");
+        column.getStyle().set("overflow-y", "auto"); // Adiciona scroll vertical
+        column.getStyle().set("overflow-x", "hidden"); // ou "visible"
 
         H3 columnTitle = new H3(title);
         columnTitle.getStyle()
@@ -371,9 +380,60 @@ public class KanbanView extends VerticalLayout {
         dialog.setHeaderTitle(task == null ? "Nova Tarefa" : "Editar Tarefa");
         dialog.setWidth("800px");
 
+        TextArea commentField = new TextArea("Adicionar comentario");
+
         VerticalLayout content = new VerticalLayout();
         content.setPadding(true);
         content.setSpacing(true);
+
+        // Mapa para armazenar os arquivos temporariamente (nome -> conteúdo)
+        Map<String, byte[]> uploadedFiles = new LinkedHashMap<>();
+        Map<String, ByteArrayOutputStream> fileBuffers = new HashMap<>();
+
+        // Componente de upload
+        MemoryBuffer buffer = new MemoryBuffer();
+        Upload upload = new Upload(buffer);
+        upload.setDropLabel(new Span("Arraste arquivos ou clique"));
+        upload.setAcceptedFileTypes(".pdf", ".docx", ".png", ".jpg", ".csv"); // ajuste conforme necessário
+        upload.setWidthFull();
+        upload.setMaxFiles(5);
+
+
+        VerticalLayout uploadSection = new VerticalLayout();
+        uploadSection.setPadding(false);
+        uploadSection.setSpacing(true);
+
+        H2 uploadTitle = new H2("Adicione arquivos a esta tarefa");
+        uploadTitle.getStyle()
+                .set("color", "var(--lumo-secondary-text-color)")
+                .set("font-size", "var(--lumo-font-size-s)")
+                .set("margin-bottom", "0");
+
+
+//        upload.setReceiver((fileName, mimeType) -> {
+//            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+//            fileBuffers.put(fileName, buffer);
+//            return buffer;
+//        });
+
+        upload.addSucceededListener(event -> {
+            String fileName = event.getFileName();
+            InputStream file = buffer.getInputStream();
+
+            try {
+                uploadedFiles.put(fileName, file.readAllBytes());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        upload.addFileRemovedListener(event -> {
+            uploadedFiles.remove(event.getFileName());
+        });
+
+        dialog.addDialogCloseActionListener(event -> {
+            uploadedFiles.clear();
+        });
 
         TextField titleField = new TextField("Título");
         titleField.setWidthFull();
@@ -411,38 +471,46 @@ public class KanbanView extends VerticalLayout {
             assigneeSelect.setValue(task.getAssignee());
         }
 
-        content.add(titleField, descriptionField, assigneeSelect);
+        uploadSection.add(uploadTitle, upload);
+
+        content.add(titleField, descriptionField, assigneeSelect, uploadSection);
 
         // Se estiver editando uma tarefa existente, exibe o histórico
         if (task != null) {
             //content.add(createHistoryComponent(task, "250px"));
 
             // Adicionar comentário
-            TextArea commentField = new TextArea("Adicionar comentário");
             commentField.setWidthFull();
             commentField.setHeight("80px");
 
-            Button addCommentButton = new Button("Adicionar comentário", e -> {
-                String comment = commentField.getValue();
-                if (!comment.isEmpty()) {
-                    task.addComment(comment, getCurrentUserName());
-                    taskService.addCommentToTask(task.getId(), comment, getCurrentUserName());
-                    commentField.clear();
+//            Button addCommentButton = new Button("Adicionar comentário", e -> {
+//                String comment = commentField.getValue();
+//                if (!comment.isEmpty()) {
+//                    task.addComment(comment, getCurrentUserName());
+//                    taskService.addCommentToTask(task.getId(), comment, getCurrentUserName());
+//                    commentField.clear();
+//
+//                    // Atualiza o componente de histórico
+//                    //content.replace(content.getComponentAt(3), createHistoryComponent(task, "250px"));
+//
+//                    refreshKanbanBoard();
+//                }
+//            });
 
-                    // Atualiza o componente de histórico
-                    //content.replace(content.getComponentAt(3), createHistoryComponent(task, "250px"));
-
-                    refreshKanbanBoard();
-                }
-            });
-
-            content.add(commentField, addCommentButton);
+            content.add(commentField);
         }
 
         Button saveButton = new Button("Salvar", e -> {
             String title = titleField.getValue();
             String description = descriptionField.getValue();
             String assignee = assigneeSelect.getValue();
+
+            String comment = commentField.getValue();
+                if (!comment.isEmpty() && task != null) {
+                    //task.addComment(comment, getCurrentUserName());
+                    taskService.addCommentToTask(task.getId(), comment, getCurrentUserName());
+
+                }
 
             if (title.isEmpty()) {
                 Notification.show("Por favor, insira um título para a tarefa.");
@@ -464,6 +532,30 @@ public class KanbanView extends VerticalLayout {
 
                 // Create new task
                 Task newTask = taskService.createTask(title, description, assignee, status, groupId, currentUser);
+
+                //Here we add the files to TaskFiles if they exist
+                //TODO here
+
+
+                if (!uploadedFiles.isEmpty()) {
+
+                    for (Map.Entry<String, byte[]> entry : uploadedFiles.entrySet()) {
+                        String filename = entry.getKey();
+                        byte[] filedata = entry.getValue();
+
+                        // Aqui você pode salvar no banco de dados
+                        // Exemplo fictício: fileService.saveToDatabase(task.getId(), nomeArquivo, conteudo);
+                        taskFilesService.saveToDatabase((long) newTask.getId(), filename, filedata);
+
+                        System.out.println("Salvando arquivo: " + filename + " (" + filedata.length + " bytes)");
+                    }
+
+                    // Limpa o mapa após envio
+                    uploadedFiles.clear();
+                    Notification.show("Arquivos enviados com sucesso!", 3000, Notification.Position.TOP_CENTER);
+                }
+
+
                 TaskCard card = new TaskCard(newTask);
 
                 // Add to appropriate list
@@ -482,6 +574,30 @@ public class KanbanView extends VerticalLayout {
                 // Update existing task
                 task.updateDetails(title, description, assignee, currentUser);
                 taskService.updateTaskDetails(task.getId(), title, description, assignee, currentUser);
+
+                if (!uploadedFiles.isEmpty()) {
+
+                    for (Map.Entry<String, byte[]> entry : uploadedFiles.entrySet()) {
+                        String filename = entry.getKey();
+                        byte[] filedata = entry.getValue();
+
+                        // Aqui você pode salvar no banco de dados
+                        // Exemplo fictício: fileService.saveToDatabase(task.getId(), nomeArquivo, conteudo);
+                        taskFilesService.saveToDatabase((long) task.getId(), filename, filedata);
+
+                        System.out.println("Salvando arquivo: " + filename + " (" + filedata.length + " bytes)");
+
+                        task.addFile(filename, getCurrentUserName());
+                    }
+
+                    taskService.saveTask(task);
+
+
+                    // Limpa o mapa após envio
+                    uploadedFiles.clear();
+                    Notification.show("Arquivos enviados com sucesso!", 3000, Notification.Position.TOP_CENTER);
+                }
+
 
                 // Refresh UI
                 refreshKanbanBoard();
@@ -621,65 +737,6 @@ public class KanbanView extends VerticalLayout {
         }
     }
 
-//    private void addDummyTasks() {
-//        String creator = "Sistema";
-//
-//        // To Do tasks
-//        Task task1 = new Task("Documentar requisitos",
-//                "Levantar e documentar todos os requisitos do projeto",
-//                "João Silva", TaskStatus.TODO, creator);
-//        Task task2 = new Task("Criar diagrama UML",
-//                "Desenhar o diagrama de classes UML do sistema",
-//                "Maria Santos", TaskStatus.TODO, creator);
-//        Task task3 = new Task("Definir cronograma",
-//                "Criar cronograma detalhado para o TCC",
-//                "Pedro Oliveira", TaskStatus.TODO, creator);
-//
-//        // In Progress tasks
-//        Task task4 = new Task("Implementar backend",
-//                "Desenvolvimento da API REST",
-//                "Carlos Ferreira", TaskStatus.IN_PROGRESS, creator);
-//        Task task5 = new Task("Design da interface",
-//                "Criar wireframes e mockups do sistema",
-//                "Ana Costa", TaskStatus.IN_PROGRESS, creator);
-//
-//        // Done tasks
-//        Task task6 = new Task("Definir tema",
-//                "Escolher e aprovar o tema do TCC",
-//                "Equipe", TaskStatus.DONE, creator);
-//        Task task7 = new Task("Escolher orientador",
-//                "Contatar e confirmar orientador para o projeto",
-//                "Coordenador", TaskStatus.DONE, creator);
-//
-//        // Simula algumas ações no histórico para demonstração
-//        task4.updateStatus(TaskStatus.TODO, "João Silva");
-//        task4.updateStatus(TaskStatus.IN_PROGRESS, "Carlos Ferreira");
-//        task4.addComment("Iniciando o desenvolvimento da API com Spring Boot", "Carlos Ferreira");
-//
-//        task6.updateStatus(TaskStatus.TODO, "Maria Santos");
-//        task6.updateStatus(TaskStatus.IN_PROGRESS, "Pedro Oliveira");
-//        task6.updateStatus(TaskStatus.DONE, "Ana Costa");
-//        task6.addComment("Tema aprovado pelo orientador", "Pedro Oliveira");
-//
-//        // Add tasks to lists
-//        todoTasks.add(task1);
-//        todoTasks.add(task2);
-//        todoTasks.add(task3);
-//        inProgressTasks.add(task4);
-//        inProgressTasks.add(task5);
-//        doneTasks.add(task6);
-//        doneTasks.add(task7);
-//
-//        // Add task cards to columns
-//        todoColumn.add(new TaskCard(task1));
-//        todoColumn.add(new TaskCard(task2));
-//        todoColumn.add(new TaskCard(task3));
-//        inProgressColumn.add(new TaskCard(task4));
-//        inProgressColumn.add(new TaskCard(task5));
-//        doneColumn.add(new TaskCard(task6));
-//        doneColumn.add(new TaskCard(task7));
-//    }
-
     // TaskCard component to represent a task in the Kanban board
     private class TaskCard extends Div implements DragSource<TaskCard> {
         private final Task task;
@@ -736,26 +793,33 @@ public class KanbanView extends VerticalLayout {
             metadata.add(updatedAt);
 
             // History badge - mostra quantos registros de histórico existem
-            Span historyBadge = new Span(String.valueOf(task.getHistory().size()));
-            historyBadge.getElement().getThemeList().add("badge small contrast");
-            historyBadge.getStyle()
-                    .set("margin-left", "0.5em");
 
+            // Ícone de histórico
             Icon historyIcon = new Icon(VaadinIcon.CLOCK);
-            historyIcon.setSize("14px");
+            historyIcon.getStyle().set("position", "relative");
+            historyIcon.getStyle().set("font-size", "11px");
 
-            Button historyButton = new Button(historyIcon);
-            historyButton.addThemeVariants();
-            historyButton.getStyle()
-                    .set("padding", "0")
-                    .set("min-width", "auto")
-                    .set("margin-left", "0.5em");
+            // Badge com a quantidade de entradas no histórico
+            Span historyBadge = new Span(String.valueOf(task.getHistory().size()));
+            historyBadge.getStyle()
+                    .set("background", "red")
+                    .set("color", "white")
+                    .set("font-size", "10px")
+                    .set("border-radius", "50%")
+                    .set("padding", "0 6px")
+                    .set("position", "absolute")
+                    .set("top", "-8px")
+                    .set("right", "-8px");
+
+
+            // Container para o botão com ícone e badge
+            Div iconWithBadgeH = new Div(historyIcon, historyBadge);
+            iconWithBadgeH.getStyle().set("position", "relative");
+
+            // Botão de histórico com o layout interno
+            Button historyButton = new Button(iconWithBadgeH);
+
             historyButton.addClickListener(e -> showTaskHistory(task));
-
-            HorizontalLayout historyLayout = new HorizontalLayout(historyIcon, historyBadge);
-            historyLayout.setSpacing(false);
-            historyLayout.setPadding(false);
-            historyLayout.setAlignItems(Alignment.CENTER);
 
             // Edit button
             Button editButton = new Button(new Icon(VaadinIcon.EDIT));
@@ -768,6 +832,105 @@ public class KanbanView extends VerticalLayout {
                     openTaskDialog(task, doneColumn);
                 }
             });
+
+            // Files button
+
+            // Criando o ícone de arquivos
+            Icon fileIcon = new Icon(VaadinIcon.FILE);
+            fileIcon.getStyle().set("position", "relative");
+            fileIcon.getStyle().set("font-size", "11px");
+
+            // Badge com o contador
+            Span badge = new Span(String.valueOf(taskFilesService.getFilesByTaskId( (long) task.getId()).size()));
+            badge.getStyle()
+                    .set("background", "red")
+                    .set("color", "white")
+                    .set("font-size", "10px")
+                    .set("border-radius", "50%")
+                    .set("padding", "0 6px")
+                    .set("position", "absolute")
+                    .set("top", "-8px")
+                    .set("right", "-8px");
+
+            // Container para o botão com ícone e badge
+            Div iconWithBadge = new Div(fileIcon, badge);
+            iconWithBadge.getStyle().set("position", "relative");
+
+
+
+            Button filesButton = new Button(iconWithBadge);
+            filesButton.addClickListener(e -> {
+
+                Dialog filesDialog = new Dialog();
+                filesDialog.setHeaderTitle("Arquivos da Tarefa");
+                filesDialog.setWidth("600px");
+
+                VerticalLayout fileListLayout = new VerticalLayout();
+                fileListLayout.setSpacing(false);
+                fileListLayout.setPadding(false);
+
+                Span subTitle = new Span("Arquivos disponíveis para download:");
+                subTitle.getStyle().set("color", "gray").set("font-size", "14px").set("margin-bottom", "10px");
+
+                fileListLayout.add(subTitle);
+
+                List<TaskFiles> files = taskFilesService.getFilesByTaskId((long) task.getId());
+
+                if (files.isEmpty()) {
+                    fileListLayout.add(new Span("Nenhum arquivo disponível."));
+                } else {
+                    for (TaskFiles file : files) {
+                        StreamResource resource = new StreamResource(
+                                file.getFilename(),
+                                () -> new ByteArrayInputStream(file.getFile())
+                        );
+
+                        Icon fileIconA = VaadinIcon.FILE.create();
+                        fileIconA.setSize("16px");
+
+                        Anchor downloadLink = new Anchor(resource, file.getFilename());
+                        downloadLink.getElement().setAttribute("download", true);
+                        downloadLink.getStyle()
+                                .set("text-decoration", "underline")
+                                .set("color", "#1a73e8")
+                                .set("margin-left", "5px");
+
+                        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+                        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ERROR);
+                        deleteButton.getElement().setProperty("title", "Remover arquivo");
+                        deleteButton.getStyle().set("margin-left", "auto");
+
+
+                        HorizontalLayout fileItem = new HorizontalLayout(fileIconA, downloadLink, deleteButton);
+                        fileItem.setAlignItems(FlexComponent.Alignment.CENTER);
+                        fileItem.setSpacing(true);
+                        fileItem.setPadding(false);
+
+
+                        deleteButton.addClickListener(click -> {
+                            taskFilesService.deleteById(file.getId());
+                            fileListLayout.remove(fileItem);
+                            task.removeFile(file.getFilename(), getCurrentUserName());
+                            taskService.saveTask(task);
+                            refreshKanbanBoard();
+                            Notification.show("Arquivo removido", 2000, Notification.Position.TOP_CENTER);
+                        });
+
+                        fileListLayout.add(fileItem);
+                    }
+                }
+
+                filesDialog.add(fileListLayout);
+
+                Button close = new Button("Fechar", event -> filesDialog.close());
+                HorizontalLayout footer = new HorizontalLayout(close);
+                footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+                footer.setWidthFull();
+
+                filesDialog.getFooter().add(footer);
+                filesDialog.open();
+            });
+
 
             // Delete button
             Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
@@ -785,18 +948,15 @@ public class KanbanView extends VerticalLayout {
                 Notification.show("Tarefa removida", 2000, Notification.Position.BOTTOM_CENTER);
 
                 taskService.deleteTask(task.getId());
+                taskFilesService.deleteFilesByTaskId((long) task.getId());
                 refreshKanbanBoard();
 
 
             });
 
-            // History button
-            Button viewHistoryButton = new Button(new Icon(VaadinIcon.CLOCK));
-            viewHistoryButton.addClickListener(e -> showTaskHistory(task));
-
             // Action buttons layout
             HorizontalLayout actions = new HorizontalLayout();
-            actions.add(editButton, deleteButton, viewHistoryButton, historyLayout);
+            actions.add(editButton, deleteButton, filesButton, historyButton);
             actions.setWidthFull();
             actions.setJustifyContentMode(JustifyContentMode.END);
             actions.setSpacing(true);

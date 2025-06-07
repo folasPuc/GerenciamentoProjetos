@@ -1,6 +1,7 @@
 package com.tcc.gerenciador_projetos_tcc.views;
 
 import com.tcc.gerenciador_projetos_tcc.entity.Grupo;
+import com.tcc.gerenciador_projetos_tcc.entity.Task;
 import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.tcc.gerenciador_projetos_tcc.service.*;
 import com.tcc.gerenciador_projetos_tcc.views.UIManager.UIManager;
@@ -46,19 +47,21 @@ public class HomeView extends HorizontalLayout {
     private HorizontalLayout mainContent;
     private final MessageService messageService;
     private final GroupChatService groupChatService;
+    private final TaskFilesService taskFilesService;
 
     // Content layouts
     private VerticalLayout empyContent;
     private VerticalLayout kanbanContent;
 
 
-    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService, MessageService messageService, GroupChatService groupChatService) {
+    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService, MessageService messageService, GroupChatService groupChatService, TaskFilesService taskFilesService) {
         this.userService = userService;
         this.alunoService = alunoService;
         this.grupoService = grupoService;
         this.taskService = taskService;
         this.messageService = messageService;
         this.groupChatService = groupChatService;
+        this.taskFilesService = taskFilesService;
         // Recupera o usuário da sessão
 
         user = VaadinSession.getCurrent().getAttribute(Users.class);
@@ -70,6 +73,7 @@ public class HomeView extends HorizontalLayout {
         setSizeFull(); // Ocupa toda a tela
         setPadding(false);
         setSpacing(false);
+        getStyle().set("overflow-y", "hidden");
 
         if (user != null) {
             setupLayout();
@@ -179,7 +183,7 @@ public class HomeView extends HorizontalLayout {
 
                 if (grupoSelecionado.getTipo().equals("Task")) {
                     // Create KanbanView
-                    kanbanView = new KanbanView(grupoSelecionado.getId(), grupoSelecionado.getNome(), taskService, grupoService);
+                    kanbanView = new KanbanView(grupoSelecionado.getId(), grupoSelecionado.getNome(), taskService, grupoService, taskFilesService);
                     kanbanContent.removeAll();
                     kanbanContent.add(kanbanView);
                     mainContent.replace(mainContent.getComponentAt(1), kanbanContent);
@@ -268,6 +272,8 @@ public class HomeView extends HorizontalLayout {
 
         // Excluir o grupo
         grupoService.deletar(grupo.getId());
+        List<Task> deleteTaskFileList = taskService.getTasksByGroup(grupo.getId().intValue());
+        taskFilesService.deleteAllTaskFiles(deleteTaskFileList);
         taskService.deleteAllTasksByGroupId(grupo.getId().intValue());
         messageService.deleteMessagesByGroupId(grupo.getId());
 
@@ -322,7 +328,6 @@ public class HomeView extends HorizontalLayout {
                 for (UI ui : uis) {
 
                     ui.access(() -> {
-                        Notification.show("MensagemRemove");
                         HomeView homeView = ui.getSession().getAttribute(HomeView.class);
                         Users users = ui.getSession().getAttribute(Users.class);
 
@@ -398,7 +403,6 @@ public class HomeView extends HorizontalLayout {
                 for (UI ui : uis) {
 
                     ui.access(() -> {
-                        Notification.show("MensagemADD");
 
                         HomeView homeView = ui.getSession().getAttribute(HomeView.class);
                         Users users = ui.getSession().getAttribute(Users.class);

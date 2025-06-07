@@ -33,6 +33,7 @@ public class Task {
     private String title;
     private String description;
     private String assignee;
+    private int fileCount = 0;
 
     @Enumerated(EnumType.STRING)
     private TaskStatus status;
@@ -98,6 +99,16 @@ public class Task {
 
     public void addComment(String comment, String user) {
         this.history.add(new TaskHistoryEntry("Comentário", user, comment, this));
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void addFile(String fileName, String user) {
+        this.history.add(new TaskHistoryEntry("Envio de arquivo", user, fileName, this));
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void removeFile(String fileName, String user) {
+        this.history.add(new TaskHistoryEntry("Removeu um arquivo", user, fileName, this));
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -171,5 +182,21 @@ public class Task {
 
     public void setHistory(List<TaskHistoryEntry> history) {
         this.history = history;
+    }
+
+    public void incrementFileCount() {
+        this.fileCount++;
+    }
+
+    public void decrementFileCount() {
+        this.fileCount--;
+    }
+
+    public void setFileCount(int count) {
+        this.fileCount = count;
+    }
+
+    public int getFileCount() {
+        return fileCount;
     }
 }

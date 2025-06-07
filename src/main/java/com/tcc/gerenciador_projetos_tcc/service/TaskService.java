@@ -56,4 +56,8 @@ public class TaskService {
 
     }
 
+    public Task saveTask(Task task) {
+       return taskRepository.save(task);
+    }
+
 }
