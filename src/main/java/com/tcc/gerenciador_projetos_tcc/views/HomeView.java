@@ -160,6 +160,7 @@ public class HomeView extends HorizontalLayout {
     private void addGroupSection() {
         // Botão para criar grupos
         Button criarGrupoButton = new Button("Criar Grupo", event -> abrirCriacaoGrupo());
+        Button abrirCalendarioAluno = new Button(new Icon(VaadinIcon.CALENDAR), event -> abrirCalendarioAluno());
 
         // Grid com os grupos do usuário
         grupoGrid = new Grid<>();
@@ -265,7 +266,18 @@ public class HomeView extends HorizontalLayout {
         grupoGrid.setWidth("450px");
 
         // Adiciona o botão e o grid à sidebar
-        sidebar.add(criarGrupoButton, grupoGrid);
+        sidebar.add(criarGrupoButton, abrirCalendarioAluno, grupoGrid);
+    }
+
+    private void abrirCalendarioAluno() {
+        Users user = VaadinSession.getCurrent().getAttribute(Users.class);
+
+        if (user != null) {
+            // Navega para a rota: /calendario/{id}-{type}
+            UI.getCurrent().navigate("calendar-aluno/" + user.getId() + "-" + "USER");
+        } else {
+            Notification.show("Usuário não encontrado na sessão!");
+        }
     }
 
     private void deletarGrupo(Grupo grupo) {
