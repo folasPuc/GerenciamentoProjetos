@@ -28,6 +28,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -241,6 +242,7 @@ public class HomeView extends HorizontalLayout {
             Button adicionarUsuarioButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE), e -> abrirDialogAdicionarUsuario(grupo));
             Button removerUsuarioButton = new Button(new Icon(VaadinIcon.MINUS_CIRCLE), e -> abrirDialogRemoverUsuario(grupo));
             Button deletarGrupoButton = new Button(new Icon(VaadinIcon.TRASH), e -> deletarGrupo(grupo));
+            //Button abrirCalendarioGrupo = new Button(new Icon(VaadinIcon.CALENDAR), e -> abrirCalendarioGrupo(grupo.getId()));
 
             Button abrirChatButton = new Button(new Icon(VaadinIcon.COMMENT), e -> {
                 getUI().ifPresent(ui -> ui.navigate("group-chat/" + grupo.getId()));
@@ -267,6 +269,15 @@ public class HomeView extends HorizontalLayout {
 
         // Adiciona o botão e o grid à sidebar
         sidebar.add(criarGrupoButton, abrirCalendarioAluno, grupoGrid);
+    }
+
+    private void abrirCalendarioGrupo(Long id) {
+
+        if (id != null) {
+            UI.getCurrent().navigate("calendar-grupo/" + id + "-" + "USER");
+        } else {
+            Notification.show("Grupo nao encontrado");
+        }
     }
 
     private void abrirCalendarioAluno() {
