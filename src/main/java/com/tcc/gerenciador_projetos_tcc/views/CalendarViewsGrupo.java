@@ -2,6 +2,8 @@ package com.tcc.gerenciador_projetos_tcc.views;
 
 import com.tcc.gerenciador_projetos_tcc.entity.CalendarEvent;
 import com.tcc.gerenciador_projetos_tcc.service.CalendarEventService;
+import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -37,13 +39,15 @@ public class CalendarViewsGrupo extends VerticalLayout implements HasUrlParamete
     private final InMemoryEntryProvider<Entry> entryProvider;
     private final FullCalendar calendar;
     private final CalendarEventService calendarEventService;
+    private final GrupoService grupoService;
     private int groupId;
     private String type;
 
-    public CalendarViewsGrupo(CalendarEventService calendarEventService) {
+    public CalendarViewsGrupo(CalendarEventService calendarEventService, GrupoService grupoService) {
         setSizeFull();
 
         this.calendarEventService = calendarEventService;
+        this.grupoService = grupoService;
 
         entryProvider = EntryProvider.inMemoryFrom(new ArrayList<>());
         calendar = FullCalendarBuilder.create().build();
@@ -154,6 +158,13 @@ public class CalendarViewsGrupo extends VerticalLayout implements HasUrlParamete
                     return;
                 }
 
+                if (!grupoService.existsById((long) groupId)) {
+                    Notification.show("Este grupo foi excluído.");
+                    dialog.close();
+                    UI.getCurrent().navigate("/homeview");
+                    return;
+                }
+
                 if (binder.validate().isOk()) {
 
                     // Reconstrói start/end
@@ -201,6 +212,14 @@ public class CalendarViewsGrupo extends VerticalLayout implements HasUrlParamete
 
         if (!newInstance) {
             Button removeButton = new Button("Remover", e -> {
+
+                if (!grupoService.existsById((long) groupId)) {
+                    Notification.show("Este grupo foi excluído.");
+                    dialog.close();
+                    UI.getCurrent().navigate("/homeview");
+                    return;
+                }
+
                 try {
                     // 🔑 Remove usando o ID real no groupId
                     if (entry.getGroupId() != null) {

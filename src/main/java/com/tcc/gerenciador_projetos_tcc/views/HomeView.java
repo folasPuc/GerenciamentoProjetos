@@ -49,13 +49,14 @@ public class HomeView extends HorizontalLayout {
     private final MessageService messageService;
     private final GroupChatService groupChatService;
     private final TaskFilesService taskFilesService;
+    private final CalendarEventService calendarEventService;
 
     // Content layouts
     private VerticalLayout empyContent;
     private VerticalLayout kanbanContent;
 
 
-    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService, MessageService messageService, GroupChatService groupChatService, TaskFilesService taskFilesService) {
+    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService, MessageService messageService, GroupChatService groupChatService, TaskFilesService taskFilesService, CalendarEventService calendarEventService) {
         this.userService = userService;
         this.alunoService = alunoService;
         this.grupoService = grupoService;
@@ -63,6 +64,7 @@ public class HomeView extends HorizontalLayout {
         this.messageService = messageService;
         this.groupChatService = groupChatService;
         this.taskFilesService = taskFilesService;
+        this.calendarEventService = calendarEventService;
         // Recupera o usuário da sessão
 
         user = VaadinSession.getCurrent().getAttribute(Users.class);
@@ -297,6 +299,7 @@ public class HomeView extends HorizontalLayout {
         grupoService.deletar(grupo.getId());
         List<Task> deleteTaskFileList = taskService.getTasksByGroup(grupo.getId().intValue());
         taskFilesService.deleteAllTaskFiles(deleteTaskFileList);
+        calendarEventService.deleteAllByGroupId(grupo.getId().intValue());
         taskService.deleteAllTasksByGroupId(grupo.getId().intValue());
         messageService.deleteMessagesByGroupId(grupo.getId());
 
