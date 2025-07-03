@@ -40,4 +40,8 @@ public class GrupoService {
     public boolean existsById(Long groupId) {
         return grupoRepository.existsById(groupId);
     }
+
+    public boolean alunoEstaNoGrupo(Long groupId, Integer userId) {
+        return grupoRepository.existsByIdAndUsuarios_Id(groupId, userId);
+    }
 }

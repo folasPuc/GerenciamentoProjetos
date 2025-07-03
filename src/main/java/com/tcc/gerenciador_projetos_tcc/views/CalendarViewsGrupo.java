@@ -1,6 +1,7 @@
 package com.tcc.gerenciador_projetos_tcc.views;
 
 import com.tcc.gerenciador_projetos_tcc.entity.CalendarEvent;
+import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.tcc.gerenciador_projetos_tcc.service.CalendarEventService;
 import com.tcc.gerenciador_projetos_tcc.service.GrupoService;
 import com.vaadin.flow.component.UI;
@@ -19,6 +20,7 @@ import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import org.vaadin.stefan.fullcalendar.CalendarViewImpl;
 import org.vaadin.stefan.fullcalendar.FullCalendar;
 import org.vaadin.stefan.fullcalendar.Entry;
@@ -280,6 +282,12 @@ public class CalendarViewsGrupo extends VerticalLayout implements HasUrlParamete
 
                     groupId = id;
                     this.type = type;
+
+                    Users user = VaadinSession.getCurrent().getAttribute(Users.class);
+
+                    if (!grupoService.alunoEstaNoGrupo((long) groupId, user.getId()) || !this.type.equals("GROUP")) {
+                        event.forwardTo("/homeview");
+                    }
 
                     List<Entry> entries = loadInitialEntries(id); //Mudar aqui dps
 

@@ -1,6 +1,7 @@
 package com.tcc.gerenciador_projetos_tcc.views;
 
 import com.tcc.gerenciador_projetos_tcc.entity.CalendarEvent;
+import com.tcc.gerenciador_projetos_tcc.entity.Users;
 import com.tcc.gerenciador_projetos_tcc.service.CalendarEventService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
@@ -18,6 +19,7 @@ import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import org.vaadin.stefan.fullcalendar.CalendarViewImpl;
 import org.vaadin.stefan.fullcalendar.FullCalendar;
 import org.vaadin.stefan.fullcalendar.Entry;
@@ -29,6 +31,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -262,6 +265,12 @@ public class CalendarViewsAluno extends VerticalLayout implements HasUrlParamete
 
                     userId = id;
                     this.type = type;
+
+                    Users user = VaadinSession.getCurrent().getAttribute(Users.class);
+
+                    if (user.getId() != id || !this.type.equals("USER")) {
+                        event.forwardTo("/homeview");
+                    }
 
                     List<Entry> entries = loadInitialEntries(id); //Mudar aqui dps
 
