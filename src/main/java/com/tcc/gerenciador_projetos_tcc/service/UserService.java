@@ -62,5 +62,9 @@ public class UserService {
         // Chama o repositório para buscar os usuários com nome e faculdade
         return usersRepository.findByNomeContainingIgnoreCaseAndFaculdade(nome, faculdade);
     }
+
+    public List<Users> listarTodos() {
+        return usersRepository.findAll();
+    }
 }
 

@@ -44,4 +44,8 @@ public class GrupoService {
     public boolean alunoEstaNoGrupo(Long groupId, Integer userId) {
         return grupoRepository.existsByIdAndUsuarios_Id(groupId, userId);
     }
+
+    public List<Grupo> buscarPorNome(String nome) {
+        return grupoRepository.findByNomeContainingIgnoreCase(nome);
+    }
 }

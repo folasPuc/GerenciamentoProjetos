@@ -13,4 +13,6 @@ public interface GrupoRepository extends JpaRepository<Grupo, Long> {
 
     boolean existsByIdAndUsuarios_Id(Long groupId, Integer userId);
 
+    List<Grupo> findByNomeContainingIgnoreCase(String nome);
+
 }

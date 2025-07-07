@@ -27,6 +27,10 @@ public class AlunoService {
         return alunoRepository.save(aluno);
     }
 
+    public Alunos save (Alunos aluno) {
+        return alunoRepository.save(aluno);
+    }
+
     public void deletarAluno(int id) {
         alunoRepository.deleteById(id);
     }

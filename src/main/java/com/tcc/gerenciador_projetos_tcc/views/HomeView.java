@@ -83,8 +83,6 @@ public class HomeView extends HorizontalLayout {
         } else {
             add(new Text("User not authenticated"));
         }
-
-
     }
 
     private void setupLayout() {
