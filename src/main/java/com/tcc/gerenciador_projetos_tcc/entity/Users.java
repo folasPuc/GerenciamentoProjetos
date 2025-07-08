@@ -2,6 +2,8 @@ package com.tcc.gerenciador_projetos_tcc.entity;
 
 import jakarta.persistence.*;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "users")
 public class Users {
@@ -122,5 +124,21 @@ public class Users {
 
     public void setFaculdade(String faculdade) {
         this.faculdade = faculdade;
+    }
+
+    // IMPORTANT: Implement equals() and hashCode() based on the 'id'
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Users users = (Users) o;
+        // Use Objects.equals for null-safe comparison of Long IDs
+        return Objects.equals(id, users.id);
+    }
+
+    @Override
+    public int hashCode() {
+        // Use Objects.hash for generating hash code based on the ID
+        return Objects.hash(id);
     }
 }

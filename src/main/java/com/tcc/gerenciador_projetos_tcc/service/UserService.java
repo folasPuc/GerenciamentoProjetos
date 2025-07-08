@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -41,6 +42,24 @@ public class UserService {
         return usersRepository.save(novoUsuario);
     }
 
+    public Users salvarAdmin(Integer ra, String nome, String sobrenome, String email, String senha, String curso, String faculdade) {
+
+        Optional<Users> existingUser = usersRepository.findByRaAndFaculdade(ra, faculdade);
+
+        if (existingUser.isPresent()) {
+            throw new IllegalArgumentException("Usuario já cadastrado.");
+        }
+
+        // Gerar o hash da senha
+        String senhaHash = passwordEncoder.encode(senha);
+
+        // Criar um novo usuário
+        Users novoUsuario = new Users(ra, nome, sobrenome, email, senhaHash, "admin", curso, faculdade);
+
+        // Salvar o usuário no banco de dados
+        return usersRepository.save(novoUsuario);
+    }
+
     // Método para autenticar um usuário
     public boolean autenticarUsuario(Integer ra, String senha, String faculdade) {
         Optional<Users> usuario = usersRepository.findByRaAndFaculdade(ra, faculdade);
@@ -60,11 +79,16 @@ public class UserService {
     public List<Users> buscarPorNomeFaculdade(String nome, String faculdade) {
 
         // Chama o repositório para buscar os usuários com nome e faculdade
-        return usersRepository.findByNomeContainingIgnoreCaseAndFaculdade(nome, faculdade);
+        return usersRepository.findByNomeContainingIgnoreCaseAndFaculdade(nome, faculdade)
+                .stream()
+                .filter(user -> "aluno".equalsIgnoreCase(user.getRole()))
+                .collect(Collectors.toList());
     }
 
     public List<Users> listarTodos() {
-        return usersRepository.findAll();
+       return usersRepository.findAll().stream()
+                .filter(user -> "aluno".equalsIgnoreCase(user.getRole()))
+                .collect(Collectors.toList());
     }
 }
 

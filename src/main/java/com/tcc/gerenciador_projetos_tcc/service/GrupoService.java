@@ -37,6 +37,12 @@ public class GrupoService {
        return grupoRepository.findById(id);
     }
 
+    // Método principal - buscar por ID
+    public Grupo buscarPorId(Long id) {
+        Optional<Grupo> grupo = grupoRepository.findById(id);
+        return grupo.orElse(null);
+    }
+
     public boolean existsById(Long groupId) {
         return grupoRepository.existsById(groupId);
     }
