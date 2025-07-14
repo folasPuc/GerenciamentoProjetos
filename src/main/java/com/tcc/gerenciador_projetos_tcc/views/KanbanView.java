@@ -270,10 +270,10 @@ public class KanbanView extends VerticalLayout {
     private VerticalLayout createColumn(String title) {
         VerticalLayout column = new VerticalLayout();
         column.addClassNames(
-                Background.CONTRAST_5,
                 BorderRadius.MEDIUM,
                 Padding.MEDIUM
         );
+        column.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
         column.setHeight("100%");
         column.setWidth("33%");
         column.getStyle().set("overflow-y", "auto"); // Adiciona scroll vertical

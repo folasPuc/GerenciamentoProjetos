@@ -10,4 +10,9 @@ import java.util.List;
 public interface GrupoRepository extends JpaRepository<Grupo, Long> {
 
     List<Grupo> findByUsuarios_Id(Integer userId);
+
+    boolean existsByIdAndUsuarios_Id(Long groupId, Integer userId);
+
+    List<Grupo> findByNomeContainingIgnoreCase(String nome);
+
 }

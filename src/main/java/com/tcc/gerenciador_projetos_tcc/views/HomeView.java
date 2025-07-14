@@ -28,6 +28,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -48,13 +49,14 @@ public class HomeView extends HorizontalLayout {
     private final MessageService messageService;
     private final GroupChatService groupChatService;
     private final TaskFilesService taskFilesService;
+    private final CalendarEventService calendarEventService;
 
     // Content layouts
     private VerticalLayout empyContent;
     private VerticalLayout kanbanContent;
 
 
-    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService, MessageService messageService, GroupChatService groupChatService, TaskFilesService taskFilesService) {
+    public HomeView(UserService userService, AlunoService alunoService, GrupoService grupoService, TaskService taskService, MessageService messageService, GroupChatService groupChatService, TaskFilesService taskFilesService, CalendarEventService calendarEventService) {
         this.userService = userService;
         this.alunoService = alunoService;
         this.grupoService = grupoService;
@@ -62,6 +64,7 @@ public class HomeView extends HorizontalLayout {
         this.messageService = messageService;
         this.groupChatService = groupChatService;
         this.taskFilesService = taskFilesService;
+        this.calendarEventService = calendarEventService;
         // Recupera o usuário da sessão
 
         user = VaadinSession.getCurrent().getAttribute(Users.class);
@@ -80,8 +83,6 @@ public class HomeView extends HorizontalLayout {
         } else {
             add(new Text("User not authenticated"));
         }
-
-
     }
 
     private void setupLayout() {
@@ -160,6 +161,7 @@ public class HomeView extends HorizontalLayout {
     private void addGroupSection() {
         // Botão para criar grupos
         Button criarGrupoButton = new Button("Criar Grupo", event -> abrirCriacaoGrupo());
+        Button abrirCalendarioAluno = new Button(new Icon(VaadinIcon.CALENDAR), event -> abrirCalendarioAluno());
 
         // Grid com os grupos do usuário
         grupoGrid = new Grid<>();
@@ -240,6 +242,7 @@ public class HomeView extends HorizontalLayout {
             Button adicionarUsuarioButton = new Button(new Icon(VaadinIcon.PLUS_CIRCLE), e -> abrirDialogAdicionarUsuario(grupo));
             Button removerUsuarioButton = new Button(new Icon(VaadinIcon.MINUS_CIRCLE), e -> abrirDialogRemoverUsuario(grupo));
             Button deletarGrupoButton = new Button(new Icon(VaadinIcon.TRASH), e -> deletarGrupo(grupo));
+            Button abrirCalendarioGrupo = new Button(new Icon(VaadinIcon.CALENDAR), e -> abrirCalendarioGrupo(grupo.getId()));
 
             Button abrirChatButton = new Button(new Icon(VaadinIcon.COMMENT), e -> {
                 getUI().ifPresent(ui -> ui.navigate("group-chat/" + grupo.getId()));
@@ -247,7 +250,7 @@ public class HomeView extends HorizontalLayout {
             abrirChatButton.getElement().setProperty("title", "Abrir chat do grupo");
 
             // Criando o layout horizontal e alinhando corretamente
-            HorizontalLayout layout = new HorizontalLayout(nomeGrupo, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton, abrirChatButton);
+            HorizontalLayout layout = new HorizontalLayout(nomeGrupo, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton, abrirChatButton, abrirCalendarioGrupo);
             layout.setSpacing(true);
             layout.setPadding(false);
             layout.setMargin(false);
@@ -255,8 +258,8 @@ public class HomeView extends HorizontalLayout {
 
             // Define a largura correta para manter a estrutura alinhada
             layout.setFlexGrow(1, nomeGrupo); // Nome ocupa espaço flexível
-            layout.setFlexGrow(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton, abrirChatButton); // Botões não crescem
-            layout.setFlexShrink(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton, abrirChatButton); // Botões não encolhem
+            layout.setFlexGrow(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton, abrirChatButton, abrirCalendarioGrupo); // Botões não crescem
+            layout.setFlexShrink(0, adicionarUsuarioButton, removerUsuarioButton, deletarGrupoButton, abrirChatButton, abrirCalendarioGrupo); // Botões não encolhem
 
             return layout;
         }).setHeader("Grupos").setAutoWidth(true);
@@ -265,7 +268,27 @@ public class HomeView extends HorizontalLayout {
         grupoGrid.setWidth("450px");
 
         // Adiciona o botão e o grid à sidebar
-        sidebar.add(criarGrupoButton, grupoGrid);
+        sidebar.add(criarGrupoButton, abrirCalendarioAluno, grupoGrid);
+    }
+
+    private void abrirCalendarioGrupo(Long id) {
+
+        if (id != null) {
+            UI.getCurrent().navigate("calendar-grupo/" + id + "-" + "GROUP");
+        } else {
+            Notification.show("Grupo nao encontrado");
+        }
+    }
+
+    private void abrirCalendarioAluno() {
+        Users user = VaadinSession.getCurrent().getAttribute(Users.class);
+
+        if (user != null) {
+            // Navega para a rota: /calendario/{id}-{type}
+            UI.getCurrent().navigate("calendar-aluno/" + user.getId() + "-" + "USER");
+        } else {
+            Notification.show("Usuário não encontrado na sessão!");
+        }
     }
 
     private void deletarGrupo(Grupo grupo) {
@@ -274,6 +297,7 @@ public class HomeView extends HorizontalLayout {
         grupoService.deletar(grupo.getId());
         List<Task> deleteTaskFileList = taskService.getTasksByGroup(grupo.getId().intValue());
         taskFilesService.deleteAllTaskFiles(deleteTaskFileList);
+        calendarEventService.deleteAllByGroupId(grupo.getId().intValue());
         taskService.deleteAllTasksByGroupId(grupo.getId().intValue());
         messageService.deleteMessagesByGroupId(grupo.getId());
 

@@ -135,7 +135,12 @@ public class MainView extends VerticalLayout {
 
                         VaadinSession.getCurrent().setAttribute(Users.class, userSave);
 
-                        getUI().ifPresent(ui -> ui.navigate("/homeview"));
+                        if (userSave.getRole().equals("admin")) {
+                            getUI().ifPresent(ui -> ui.navigate("/admin"));
+                        } else {
+                            getUI().ifPresent(ui -> ui.navigate("/homeview"));
+                        }
+
 
 
                     } else {
