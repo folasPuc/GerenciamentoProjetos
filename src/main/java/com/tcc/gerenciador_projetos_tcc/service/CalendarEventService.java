@@ -35,4 +35,7 @@ public class CalendarEventService {
         repository.deleteByOwnerIdAndType(groupId, "GROUP");
     }
 
+    public void deleteAllByUserId(int userId) {
+        repository.deleteByOwnerIdAndType(userId, "USER");
+    }
 }

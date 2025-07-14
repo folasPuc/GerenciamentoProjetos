@@ -15,6 +15,7 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -57,11 +58,16 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
         this.messageService = messageService;
         this.userService = userService;
 
+        setWidthFull();
+        setAlignItems(Alignment.CENTER);  // Centraliza tudo na view
+
         // Tabs
-        Tab alunosTab = new Tab("Cadastrar Aluno");
+        Tab alunosTab = new Tab("Cadastrar RA");
         Tab gruposTab = new Tab("Gerenciar Grupos");
         Tab adminTab = new Tab("Cadastrar Admin"); // NOVO TAB
-        Tabs tabs = new Tabs(alunosTab, gruposTab, adminTab);
+        Tab gerenciarAlunosTab = new Tab("Gerenciar Usuarios"); // NOVO
+
+        Tabs tabs = new Tabs(alunosTab, gruposTab, adminTab, gerenciarAlunosTab);
 
         tabs.addSelectedChangeListener(e -> setContent(e.getSelectedTab()));
 
@@ -85,14 +91,78 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
     private void setContent(Tab tab) {
         content.removeAll();
 
-        if ("Cadastrar Aluno".equals(tab.getLabel())) {
+        content.setAlignItems(Alignment.CENTER);
+        content.setJustifyContentMode(JustifyContentMode.CENTER);
+        content.setWidthFull();
+        content.setSpacing(true);
+
+        if ("Cadastrar RA".equals(tab.getLabel())) {
             content.add(createAlunoForm());
         } else if ("Gerenciar Grupos".equals(tab.getLabel())) {
             content.add(createGrupoGrid());
         } else if ("Cadastrar Admin".equals(tab.getLabel())) {
             content.add(createAdminForm()); // NOVO FORM
+        } else if ("Gerenciar Usuarios".equals(tab.getLabel())) {
+            content.add(createAlunosGrid());
         }
     }
+
+    private VerticalLayout createAlunosGrid() {
+        H1 title = new H1("Gerenciar Usuarios");
+        title.getStyle().set("color", "#002D72").set("font-size", "24px");
+
+        Grid<Alunos> alunosGrid = new Grid<>(Alunos.class, false);
+        alunosGrid.addColumn(Alunos::getId).setHeader("ID");
+        alunosGrid.addColumn(Alunos::getFaculdade).setHeader("Faculdade");
+        alunosGrid.addColumn(Alunos::getRa).setHeader("RA");
+
+        alunosGrid.addComponentColumn(aluno -> {
+            Button remover = new Button(new Icon(VaadinIcon.TRASH));
+            remover.getElement().setAttribute("theme", "error"); // Vermelho
+            remover.addClickListener(e -> {
+                try {
+
+                    Users user = userService.getUserByRa(aluno.getRa());
+
+                    // 1️⃣ Remove de todos os grupos
+                    List<Grupo> grupos = grupoService.buscarPorUsuario(user.getId());
+
+                    System.out.println("Grupos: " + grupos);;
+
+
+                    System.out.println("User: " + user);
+                    for (Grupo grupo : grupos) {
+                        grupo.removerUsuario(user);
+                        grupoService.salvar(grupo);
+                    }
+
+                    alunoService.deletarAluno(aluno.getId());
+                    userService.deleteByRa(aluno.getRa());
+                    calendarEventService.deleteAllByUserId(user.getId());
+                    alunosGrid.setItems(alunoService.listarTodos());
+                    Notification.show("Aluno removido com sucesso!");
+                } catch (Exception ex) {
+                    Notification.show("Erro ao remover aluno: " + ex.getMessage());
+                }
+            });
+            return remover;
+        }).setHeader("Remover");
+
+        alunosGrid.setItems(alunoService.listarTodos());
+        alunosGrid.setWidth("600px");
+        alunosGrid.setHeight("500px");
+        alunosGrid.getStyle().set("margin", "0 auto");
+
+        VerticalLayout layout = new VerticalLayout(title, alunosGrid);
+        layout.setSizeFull();
+        layout.setAlignItems(Alignment.CENTER);
+        layout.setJustifyContentMode(JustifyContentMode.START);
+        layout.setPadding(true);
+        layout.setSpacing(true);
+
+        return layout;
+    }
+
 
     private VerticalLayout createAdminForm() {
         // Título do formulário
@@ -234,8 +304,13 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                 faculdadeSelect,
                 salvarButton
         );
+//        layout.setAlignItems(Alignment.CENTER);
+//        layout.setJustifyContentMode(JustifyContentMode.CENTER);
+
         layout.setAlignItems(Alignment.CENTER);
-        layout.setJustifyContentMode(JustifyContentMode.CENTER);
+        layout.setSpacing(true);
+        layout.setPadding(true);
+        layout.getStyle().set("max-width", "400px");
 
         return layout;
     }
@@ -271,7 +346,14 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     private VerticalLayout createAlunoForm() {
+
+        H1 title = new H1("Cadastro de RA");
+        title.getStyle().set("color", "#002D72").set("font-size", "24px");
+
+
         IntegerField raField = new IntegerField("RA");
+        raField.setWidth("300px");
+
         Button salvar = new Button("Salvar", e -> {
             try {
                 if (raField.getValue() != null && collegeSelect.getValue() != null) {
@@ -290,10 +372,24 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
             }
         });
 
-        return new VerticalLayout(raField, collegeSelect, salvar);
+        salvar.getStyle()
+                .set("background", "#002D72")
+                .set("color", "#FFFFFF")
+                .set("border-radius", "8px");
+
+        VerticalLayout layout = new VerticalLayout(title, raField, collegeSelect, salvar);
+        layout.setAlignItems(Alignment.CENTER);
+        layout.setSpacing(true);
+        layout.setPadding(true);
+        layout.getStyle().set("max-width", "400px");
+        return layout;
     }
 
     private VerticalLayout createGrupoGrid() {
+
+        H1 title = new H1("Gerenciar Grupos");
+        title.getStyle().set("color", "#002D72").set("font-size", "24px");
+
         grid = new Grid<>(Grupo.class, false);
         grid.addColumn(Grupo::getId).setHeader("ID");
         grid.addColumn(Grupo::getNome).setHeader("Nome");
@@ -354,8 +450,16 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
         });
 
         HorizontalLayout buttons = new HorizontalLayout(nomeGrupo, buscarGrupoButton, criar, deletar);
+        buttons.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        return new VerticalLayout(buttons, grid);
+        VerticalLayout layout = new VerticalLayout(title, buttons, grid);
+        layout.setAlignItems(Alignment.CENTER);
+        layout.setWidthFull();
+        layout.setPadding(true);
+        layout.setSpacing(true);
+        layout.getStyle().set("max-width", "1200px");
+
+        return layout;
     }
 
     private void refreshGrid() {

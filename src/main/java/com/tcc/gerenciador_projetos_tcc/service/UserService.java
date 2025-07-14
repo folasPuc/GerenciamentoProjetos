@@ -90,5 +90,14 @@ public class UserService {
                 .filter(user -> "aluno".equalsIgnoreCase(user.getRole()))
                 .collect(Collectors.toList());
     }
+
+    public void deleteByRa(Integer ra) {
+        usersRepository.deleteByRa(ra);
+    }
+
+    public Users getUserByRa(Integer ra) {
+        return usersRepository.findByRa(ra);
+    }
+
 }
 
