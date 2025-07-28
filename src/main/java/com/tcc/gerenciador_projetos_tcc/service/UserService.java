@@ -99,5 +99,9 @@ public class UserService {
         return usersRepository.findByRa(ra);
     }
 
+    public Optional<Users> findByEmail(String email) {
+        return usersRepository.findByEmail(email);
+    }
+
 }
 

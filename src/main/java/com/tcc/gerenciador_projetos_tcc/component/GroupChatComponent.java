@@ -11,6 +11,7 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -131,7 +132,10 @@ public class GroupChatComponent extends VerticalLayout {
     private void handleFileUpload(InputStream fileData, String fileName, String fileType) {
 
         // Aqui você pode salvar o arquivo, enviar pelo chat, etc.
-        Notification.show("Arquivo '" + fileName + "' enviado.");
+
+        Notification.show("Arquivo '" + fileName + "' enviado.", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
 
         // Exemplo: converter para array de bytes (se for enviar para o backend)
         try {
@@ -147,8 +151,10 @@ public class GroupChatComponent extends VerticalLayout {
                     chatMessage, groupId));
 
         } catch (IOException e) {
-            Notification.show("Erro ao processar o arquivo.");
-            e.printStackTrace();
+
+            Notification.show("Erro ao processar o arquivo.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
         }
 
     }
@@ -399,7 +405,10 @@ public class GroupChatComponent extends VerticalLayout {
         if (!text.isEmpty()) {
 
             if (!grupoService.existsById(groupId)) {
-                Notification.show("Este grupo foi excluído.");
+
+                Notification.show("Este grupo foi excluído.", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
                 UI.getCurrent().navigate("/homeview");
                 return;
             }
