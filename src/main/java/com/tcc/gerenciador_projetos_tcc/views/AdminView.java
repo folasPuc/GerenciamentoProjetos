@@ -15,6 +15,7 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -127,7 +128,7 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                     // 1️⃣ Remove de todos os grupos
                     List<Grupo> grupos = grupoService.buscarPorUsuario(user.getId());
 
-                    System.out.println("Grupos: " + grupos);;
+                    System.out.println("Grupos: " + grupos);
 
 
                     System.out.println("User: " + user);
@@ -140,9 +141,13 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                     userService.deleteByRa(aluno.getRa());
                     calendarEventService.deleteAllByUserId(user.getId());
                     alunosGrid.setItems(alunoService.listarTodos());
-                    Notification.show("Aluno removido com sucesso!");
+                    Notification.show("Aluno removido com sucesso!", 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
                 } catch (Exception ex) {
-                    Notification.show("Erro ao remover aluno: " + ex.getMessage());
+                    Notification.show("Erro ao remover aluno: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
                 }
             });
             return remover;
@@ -274,7 +279,9 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                     userService.salvarAdmin(novoAdmin.getRa(), novoAdmin.getNome(), novoAdmin.getSobrenome(), novoAdmin.getEmail(), novoAdmin.getSenhaHash(),
                             novoAdmin.getCurso(), novoAdmin.getFaculdade());
 
-                    Notification.show("Admin cadastrado com sucesso!");
+                    Notification.show("Admin cadastrado com sucesso!", 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
 
                     raField.clear();
                     passwordField.clear();
@@ -283,7 +290,9 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                     faculdadeSelect.clear();
 
                 } catch (Exception ex) {
-                    Notification.show("Erro ao cadastrar admin: " + ex.getMessage());
+                    Notification.show("Erro ao cadastrar admin: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
                 }
             }
         });
@@ -317,29 +326,43 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
 
     private boolean verifyFieldsAdmin(Integer ra, String senha, String nome, String sobrenome, String faculdade, String email) {
         if (ra == null || ra <= 0) {
-            Notification.show("O campo 'RA' é obrigatório e deve ser um valor válido.");
+
+            Notification.show("O campo 'RA' é obrigatório e deve ser um valor válido.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
             return false;
         }
         if (senha == null || senha.trim().isEmpty()) {
-            Notification.show("O campo 'Senha' é obrigatório.");
+
+            Notification.show("O campo 'Senha' é obrigatório.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
             return false;
         }
         if (nome == null || nome.trim().isEmpty()) {
-            Notification.show("O campo 'Nome' é obrigatório.");
+
+            Notification.show("O campo 'Nome' é obrigatório.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return false;
         }
         if (sobrenome == null || sobrenome.trim().isEmpty()) {
-            Notification.show("O campo 'Sobrenome' é obrigatório.");
+
+            Notification.show("O campo 'Sobrenome' é obrigatório.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return false;
         }
 
         if (email == null || email.trim().isEmpty()) {
-            Notification.show("O campo 'Email' é obrigatório.");
+
+            Notification.show("O campo 'Email' é obrigatório.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return false;
         }
 
         if (faculdade == null || faculdade.trim().isEmpty()) {
-            Notification.show("O campo 'Faculdade' é obrigatório.");
+
+            Notification.show("O campo 'Faculdade' é obrigatório.", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return false;
         }
         return true;
@@ -363,12 +386,18 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                     alunoService.save(aluno);
                     raField.clear();
                     collegeSelect.clear();
-                    Notification.show("Aluno salvo com sucesso!");
+                    Notification.show("Aluno salvo com sucesso!", 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
                 } else {
-                    Notification.show("Por favor, preencha todos os campos!");
+                    Notification.show("Por favor, preencha todos os campos!", 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
                 }
             } catch (Exception ex) {
-                Notification.show("Erro ao salvar aluno: " + ex.getMessage());
+                Notification.show("Erro ao salvar aluno: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
             }
         });
 
@@ -440,12 +469,18 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                     refreshGrid();
                     // Atualiza todas as sessões da UI conectadas
                     updateAllHomeViews();
-                    Notification.show("Grupo deletado com sucesso!");
+                    Notification.show("Grupo deletado com sucesso!", 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
                 } catch (Exception ex) {
-                    Notification.show("Erro ao deletar grupo: " + ex.getMessage());
+                    Notification.show("Erro ao deletar grupo: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
                 }
             } else {
-                Notification.show("Por favor, selecione um grupo para deletar!");
+                Notification.show("Por favor, selecione um grupo para deletar!", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
             }
         });
 
@@ -484,17 +519,22 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
             if (nomeGrupo != null && !nomeGrupo.trim().isEmpty()) {
                 try {
                     Grupo novoGrupo = new Grupo(nomeGrupo);
-                    novoGrupo.addUsuario(user); // Associa o criador ao grupo
                     novoGrupo.setTipo(tipoGrupo);
                     grupoService.salvar(novoGrupo);
                     refreshGrid();
                     dialog.close();
-                    Notification.show("Grupo criado com sucesso!");
+                    Notification.show("Grupo criado com sucesso!", 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
                 } catch (Exception ex) {
-                    Notification.show("Erro ao criar grupo: " + ex.getMessage());
+                    Notification.show("Erro ao criar grupo: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
                 }
             } else {
-                Notification.show("Por favor, digite o nome do grupo!");
+                Notification.show("Por favor, digite o nome do grupo!", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
             }
         });
 
@@ -531,7 +571,9 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                         grupoAtualizado.removerUsuario(usuario);
                         grupoService.salvar(grupoAtualizado);
 
-                        Notification.show("Usuário removido: " + usuario.getNome() + " " + usuario.getSobrenome());
+                        Notification.show("Usuário removido: " + usuario.getNome() + " " + usuario.getSobrenome(), 3000, Notification.Position.TOP_CENTER)
+                                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
 
                         // Atualiza o grid local
                         usuariosGrid.setItems(grupoAtualizado.getUsuarios());
@@ -543,7 +585,9 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                         updateAllHomeViews();
                     }
                 } catch (Exception ex) {
-                    Notification.show("Erro ao remover usuário: " + ex.getMessage());
+                    Notification.show("Erro ao remover usuário: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
                 }
             });
             return removerButton;
@@ -610,7 +654,9 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
 
                 usuariosGrid.setItems(usuarios);
             } catch (Exception ex) {
-                Notification.show("Erro ao buscar usuários: " + ex.getMessage());
+                Notification.show("Erro ao buscar usuários: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
             }
         });
 
@@ -626,7 +672,9 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                         grupoAtualizado.addUsuario(usuarioSelecionado);
                         grupoService.salvar(grupoAtualizado);
 
-                        Notification.show("Usuário adicionado: " + usuarioSelecionado.getNome() + " " + usuarioSelecionado.getSobrenome());
+                        Notification.show("Usuário adicionado: " + usuarioSelecionado.getNome() + " " + usuarioSelecionado.getSobrenome(), 3000, Notification.Position.TOP_CENTER)
+                                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
 
                         // Atualiza o grid principal
                         refreshGrid();
@@ -637,10 +685,14 @@ public class AdminView extends VerticalLayout implements BeforeEnterObserver {
                         dialog.close();
                     }
                 } catch (Exception ex) {
-                    Notification.show("Erro ao adicionar usuário: " + ex.getMessage());
+                    Notification.show("Erro ao adicionar usuário: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
                 }
             } else {
-                Notification.show("Por favor, selecione um usuário para adicionar ao grupo.");
+                Notification.show("Por favor, selecione um usuário para adicionar ao grupo.", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
             }
         });
 

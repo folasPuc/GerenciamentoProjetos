@@ -5,6 +5,7 @@ import com.tcc.gerenciador_projetos_tcc.service.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -127,7 +128,10 @@ public class MainView extends VerticalLayout {
             if (alunoService.existsRAAndFaculdade(user, collegeValue)) {
                 try {
                     if (userService.autenticarUsuario(user, pass, collegeValue)) {
-                        Notification.show("Usuário Autenticado com sucesso!");
+                        Notification notification = new Notification("Usuário autenticado com sucesso!", 3000, Notification.Position.TOP_CENTER);
+                        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                        notification.open();
+
 
                         Users userSave = userService.getUserByRaAndFaculdade(user, collegeValue)
                                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
@@ -144,13 +148,23 @@ public class MainView extends VerticalLayout {
 
 
                     } else {
-                        Notification.show("Credenciais incorretas");
+                        Notification notification = new Notification("Credenciais incorretas!", 3000, Notification.Position.TOP_CENTER);
+                        notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        notification.open();
+
                     }
                 } catch (IllegalArgumentException e) {
-                    Notification.show(e.getMessage());
+                    Notification notification = new Notification(e.getMessage(), 3000, Notification.Position.TOP_CENTER);
+                    notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notification.open();
+
+
                 }
             } else {
-                Notification.show("RA inválido para " + collegeValue);
+                Notification notification = new Notification("RA inválido para " + collegeValue, 3000, Notification.Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notification.open();
+
             }
 
         }
@@ -178,15 +192,25 @@ public class MainView extends VerticalLayout {
     private boolean verifyFields(Integer ra, String password, String college) {
         // Verificando se algum campo está vazio ou inválido
         if (ra == null || ra <= 0) {
-            Notification.show("O campo 'RA' é obrigatório e deve ser um valor válido.");
+
+            Notification notification = new Notification("O campo 'RA' é obrigatório e deve ser um valor válido.", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
+
             return false;
         }
         if (password == null || password.trim().isEmpty()) {
-            Notification.show("O campo 'Senha' é obrigatório.");
+
+            Notification notification = new Notification("O campo 'Senha' é obrigatório.", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
             return false;
         }
         if (college == null || college.trim().isEmpty()) {
-            Notification.show("O campo 'Faculdade' é obrigatório.");
+
+            Notification notification = new Notification("O campo 'Faculdade' é obrigatório.", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
             return false;
         }
 

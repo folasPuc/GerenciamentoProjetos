@@ -17,6 +17,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -276,7 +277,11 @@ public class HomeView extends HorizontalLayout {
         if (id != null) {
             UI.getCurrent().navigate("calendar-grupo/" + id + "-" + "GROUP");
         } else {
-            Notification.show("Grupo nao encontrado");
+
+            Notification notification = new Notification("Grupo nao encontrado", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
+
         }
     }
 
@@ -287,7 +292,10 @@ public class HomeView extends HorizontalLayout {
             // Navega para a rota: /calendario/{id}-{type}
             UI.getCurrent().navigate("calendar-aluno/" + user.getId() + "-" + "USER");
         } else {
-            Notification.show("Usuário não encontrado na sessão!");
+
+            Notification notification = new Notification("Usuário não encontrado na sessão!", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
         }
     }
 
@@ -307,7 +315,6 @@ public class HomeView extends HorizontalLayout {
         for (UI ui : uis) {
 
             ui.access(() -> {
-                Notification.show("Grupo excluido");
 
                 HomeView homeView = ui.getSession().getAttribute(HomeView.class);
                 Users users = ui.getSession().getAttribute(Users.class);
@@ -320,7 +327,11 @@ public class HomeView extends HorizontalLayout {
         }
 
         // Exibe uma notificação confirmando a exclusão
-        Notification.show("Grupo " + grupo.getNome() + " deletado com sucesso.");
+
+        Notification notification = new Notification("Grupo " + grupo.getNome() + " deletado com sucesso.", 3000, Notification.Position.TOP_CENTER);
+        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        notification.open();
+
 
 
 
@@ -418,7 +429,11 @@ public class HomeView extends HorizontalLayout {
             if (usuarioSelecionado != null) {
                 grupo.addUsuario(usuarioSelecionado); // Adiciona o usuário ao grupo
                 grupoService.salvar(grupo); // Salva o grupo atualizado
-                Notification.show("Adicionado : " + usuarioSelecionado.getNome() + usuarioSelecionado.getSobrenome());
+
+                Notification notification = new Notification("Adicionado : " + usuarioSelecionado.getNome() + " " + usuarioSelecionado.getSobrenome(), 3000, Notification.Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                notification.open();
+
 
 
                 // Obtém todas as sessões da UI conectadas
@@ -440,7 +455,11 @@ public class HomeView extends HorizontalLayout {
 
                 dialog.close(); // Fecha o diálogo
             } else {
-                Notification.show("Por favor, selecione um usuário para adicionar ao grupo.");
+
+                Notification notification = new Notification("Por favor, selecione um usuário para adicionar ao grupo.", 3000, Notification.Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notification.open();
+
             }
         });
 
@@ -479,6 +498,10 @@ public class HomeView extends HorizontalLayout {
                 novoGrupo.setTipo(tipoGrupo);
                 grupoService.salvar(novoGrupo);
                 grupoGrid.setItems(grupoService.buscarPorUsuario(user.getId())); // Atualiza o grid
+
+                Notification.show("Grupo: " + nomeGrupo + " criado", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
                 dialog.close();
             }
         });

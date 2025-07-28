@@ -4,6 +4,7 @@ import com.tcc.gerenciador_projetos_tcc.service.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -77,13 +78,26 @@ public class RegisterView extends VerticalLayout {
                         if (alunoService.existsRAAndFaculdade(raValue, collegeValue)) {
                             try {
                                 userService.salvarUsuario(raValue, firstNameValue, lastNameValue, emailValue, passwordValue, curso, collegeValue);
-                                Notification.show("Usuário cadastrado com sucesso!");
+
+                                Notification notification = new Notification("Usuário cadastrado com sucesso!", 3000, Notification.Position.TOP_CENTER);
+                                notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                                notification.open();
+
                                 getUI().ifPresent(ui -> ui.navigate(""));
                             } catch (IllegalArgumentException e) {
-                                Notification.show(e.getMessage());
+
+                                Notification notification = new Notification(e.getMessage(), 3000, Notification.Position.TOP_CENTER);
+                                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                notification.open();
+
                             }
                         } else {
-                            Notification.show("RA inválido para PUCCAMP!");
+
+                            Notification notification = new Notification("RA inválido para " + collegeValue, 3000, Notification.Position.TOP_CENTER);
+                            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                            notification.open();
+
+
                         }
             }
 
@@ -111,7 +125,7 @@ public class RegisterView extends VerticalLayout {
     private void cursoSelectConfig() {
         cursoSelect = new Select<>();
         cursoSelect.setLabel("Curso");
-        cursoSelect.setItems("Eng Comp", "Direito");
+        cursoSelect.setItems("Eng Comp", "Direito", "Arquitetura", "Design", "Ed Fisica");
         cursoSelect.setPlaceholder("Selecione o curso");
         cursoSelect.getStyle().set("width", "300px");
     }
@@ -289,27 +303,46 @@ public class RegisterView extends VerticalLayout {
     private boolean verifyFields(String firstName, String lastName, String email, Integer ra, String password, String college) {
         // Verificando se algum campo está vazio ou inválido
         if (firstName == null || firstName.trim().isEmpty()) {
-            Notification.show("O campo 'Nome' é obrigatório.");
+
+            Notification notification = new Notification("O campo 'Nome' é obrigatório.", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
+
             return false;
         }
         if (lastName == null || lastName.trim().isEmpty()) {
-            Notification.show("O campo 'Sobrenome' é obrigatório.");
+
+            Notification notification = new Notification("O campo 'Sobrenome' é obrigatório.", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
             return false;
         }
         if (email == null || email.trim().isEmpty()) {
-            Notification.show("O campo 'Email' é obrigatório.");
+
+            Notification notification = new Notification("O campo 'Email' é obrigatório.", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
             return false;
         }
         if (ra == null || ra <= 0) {
-            Notification.show("O campo 'RA' é obrigatório e deve ser um valor válido.");
+
+            Notification notification = new Notification("O campo 'RA' é obrigatório e deve ser um valor válido.", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
             return false;
         }
         if (password == null || password.trim().isEmpty()) {
-            Notification.show("O campo 'Senha' é obrigatório.");
+
+            Notification notification = new Notification("O campo 'Senha' é obrigatório.", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
             return false;
         }
         if (college == null || college.trim().isEmpty()) {
-            Notification.show("O campo 'Faculdade' é obrigatório.");
+
+            Notification notification = new Notification("O campo 'Faculdade' é obrigatório.", 3000, Notification.Position.TOP_CENTER);
+            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+            notification.open();
             return false;
         }
 

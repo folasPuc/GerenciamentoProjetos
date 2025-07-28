@@ -19,6 +19,7 @@ import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -362,7 +363,10 @@ public class KanbanView extends VerticalLayout {
                     ((VerticalLayout) taskCard.getParent().get()).remove(taskCard);
                 }
 
-                Notification.show("Tarefa movida com sucesso", 2000, Notification.Position.BOTTOM_CENTER);
+                Notification notification = new Notification("Tarefa movida com sucesso", 3000, Notification.Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                notification.open();
+
 
                 refreshKanbanBoard();
             }
@@ -513,7 +517,11 @@ public class KanbanView extends VerticalLayout {
                 }
 
             if (title.isEmpty()) {
-                Notification.show("Por favor, insira um título para a tarefa.");
+
+                Notification notification = new Notification("Por favor, insira um título para a tarefa.", 3000, Notification.Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notification.open();
+
                 return;
             }
 
@@ -552,7 +560,11 @@ public class KanbanView extends VerticalLayout {
 
                     // Limpa o mapa após envio
                     uploadedFiles.clear();
-                    Notification.show("Arquivos enviados com sucesso!", 3000, Notification.Position.TOP_CENTER);
+
+                    Notification notification = new Notification("Arquivos enviados com sucesso!", 3000, Notification.Position.TOP_CENTER);
+                    notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    notification.open();
+
                 }
 
 
@@ -595,7 +607,9 @@ public class KanbanView extends VerticalLayout {
 
                     // Limpa o mapa após envio
                     uploadedFiles.clear();
-                    Notification.show("Arquivos enviados com sucesso!", 3000, Notification.Position.TOP_CENTER);
+                    Notification notification = new Notification("Arquivos enviados com sucesso!", 3000, Notification.Position.TOP_CENTER);
+                    notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    notification.open();
                 }
 
 
@@ -719,7 +733,6 @@ public class KanbanView extends VerticalLayout {
                         homeView.grupoGrid.deselect(selectedKanban);
                         homeView.grupoGrid.select(selectedKanban);
 
-                        //Notification.show("Estamos atualizando aqui");
 
                     }
 
@@ -913,7 +926,11 @@ public class KanbanView extends VerticalLayout {
                             task.removeFile(file.getFilename(), getCurrentUserName());
                             taskService.saveTask(task);
                             refreshKanbanBoard();
-                            Notification.show("Arquivo removido", 2000, Notification.Position.TOP_CENTER);
+
+                            Notification notification = new Notification("Arquivo removido", 3000, Notification.Position.TOP_CENTER);
+                            notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                            notification.open();
+
                         });
 
                         fileListLayout.add(fileItem);
@@ -945,7 +962,11 @@ public class KanbanView extends VerticalLayout {
                     doneTasks.remove(task);
                     doneColumn.remove(this);
                 }
-                Notification.show("Tarefa removida", 2000, Notification.Position.BOTTOM_CENTER);
+
+                Notification notification = new Notification("Tarefa removida", 3000, Notification.Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                notification.open();
+
 
                 taskService.deleteTask(task.getId());
                 taskFilesService.deleteFilesByTaskId((long) task.getId());

@@ -9,6 +9,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -100,7 +101,7 @@ public class CalendarViewsAluno extends VerticalLayout implements HasUrlParamete
             Entry entry = new Entry();
             entry.setStart(event.getStart());
             entry.setEnd(event.getEnd());
-            entry.setAllDay(event.isAllDay());
+            entry.setAllDay(false);
             entry.setColor("dodgerblue");
             openEntryEditor(entry, true);
         });
@@ -154,7 +155,9 @@ public class CalendarViewsAluno extends VerticalLayout implements HasUrlParamete
                 LocalTime end = endTimePicker.getValue();
 
                 if (start.isAfter(end)) {
-                    Notification.show("A hora de início não pode ser depois da hora de fim");
+                    Notification notification = new Notification("A hora de início não pode ser depois da hora de fim", 3000, Notification.Position.TOP_CENTER);
+                    notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notification.open();
                     return;
                 }
 
@@ -188,16 +191,22 @@ public class CalendarViewsAluno extends VerticalLayout implements HasUrlParamete
 
                     if (newInstance) {
                         entryProvider.addEntries(entry);
-                        Notification.show("Evento criado!");
+                        Notification notification = new Notification("Evento criado!", 3000, Notification.Position.TOP_CENTER);
+                        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                        notification.open();
                     } else {
                         entryProvider.refreshItem(entry);
-                        Notification.show("Evento atualizado!");
+                        Notification notification = new Notification("Evento atualizado!", 3000, Notification.Position.TOP_CENTER);
+                        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                        notification.open();
                     }
                     entryProvider.refreshAll();
                     dialog.close();
                 }
             } catch (ValidationException ex) {
-                Notification.show("Erro ao salvar evento");
+                Notification notification = new Notification("Erro ao salvar evento", 3000, Notification.Position.TOP_CENTER);
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                notification.open();
             }
         });
 
@@ -212,10 +221,14 @@ public class CalendarViewsAluno extends VerticalLayout implements HasUrlParamete
                     }
                     entryProvider.removeEntry(entry);
                     entryProvider.refreshAll();
-                    Notification.show("Evento removido!");
+                    Notification notification = new Notification("Evento removido!", 3000, Notification.Position.TOP_CENTER);
+                    notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    notification.open();
                     dialog.close();
                 } catch (Exception ex) {
-                    Notification.show("Erro ao remover evento");
+                    Notification notification = new Notification("Erro ao remover evento", 3000, Notification.Position.TOP_CENTER);
+                    notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    notification.open();
                 }
             });
             buttons.add(removeButton);
