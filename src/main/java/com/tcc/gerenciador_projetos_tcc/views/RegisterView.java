@@ -285,7 +285,7 @@ public class RegisterView extends VerticalLayout {
     }
 
     private void titleConfig() {
-        title = new H1("PUC-Campinas - Cadastro");
+        title = new H1("UniWorks - Cadastro");
 
         title.getStyle()
                 .set("color", "#002D72")
